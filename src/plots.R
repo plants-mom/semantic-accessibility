@@ -16,7 +16,7 @@ library(ggtext)
 ##
 
 source(here("src/priors.R"))
-sim_summary <- read.csv(here("results/sim_summary.csv"))
+sim_summary <- read.csv(here("results/sim_summary_bin.csv"))
 
 
 
