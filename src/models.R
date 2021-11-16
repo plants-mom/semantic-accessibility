@@ -15,107 +15,48 @@ options(mc.cores = parallel::detectCores())
 
 source(here("src/priors.R"))
 
-## split_by_quant(data_list) <-
-
 files <- list.files(here("results"), pattern = "region[0-9].csv")
 dfs <- map(files, ~ read_csv(here("results", .)))
 
-frm <- formula(totfixdur ~ 1 + quants + typic + interf + quant_x_typic +
-    quant_x_inter + quant_x_interf_TYP + quant_x_interf_ATY +
-    (1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-      quant_x_interf_TYP + quant_x_interf_ATY | subj) +
-    (1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-      quant_x_interf_TYP + quant_x_interf_ATY | item))
+fit_models <- function(data_list, dv_name) {
+  frm <- formula(~ 1 + typic * interf * quants +
+    (1 + typic * interf * quants | item) +
+    (1 + typic * interf * quants | subj)) %>%
+    update.formula(paste0(dv_name, "~ . "))
 
-frm <- formula(totfixdur ~ 1 + typic * interf * quants + (1 + typic * interf * quants | item) +
-                 (1 + typic * interf * quants | subj))
+  sel_data <- map(data_list,
+                  ~ select(., region:item, quan_cond:last_col(), {{ dv_name }}))
 
-map(dfs, ~ split(., .$quan_cond)) %>%
- map(~ map(., ~ lm(tgdur ~ 1, data = .)))
-
-totfixdurs <- map(dfs, ~ select(., region:item, totfixdur, cond, typic, interf, quants)) %>%
-  ## map(dfs, ~ filter(., quan_cond == "EEN")) %>%
-  imap(~ brm(frm,
-  family = lognormal(),
-  prior = priors,
-  iter = 4000,
-  data = .x,
-  file = here("models", paste0("totfixdur_r", .y))
-  ))
-
-totfixdurs_geen <- map(dfs, ~ filter(., quan_cond == "GEEN")) %>%
-map(~ select(., region:item, totfixdur, cond, typic, interf)) %>%
-  imap(~ brm(frm,
-  family = lognormal(),
-  prior = priors,
-  iter = 4000,
-  data = .x,
-  file = here("models", paste0("totfixdur_geen_r", .y))
-  ))
-
-frm <- update.formula(frm, ffdur ~ .)
-
-## ffdurs_een <- dfs[6:8] %>%
-##   map(~ filter(., quan_cond == "EEN")) %>%
-##   map(~ select(., region:item, ffdur, cond, typic, interf)) %>%
-##   imap(~ brm(frm,
-##   family = lognormal(),
-##   prior = priors,
-##   iter = 4000,
-##   data = .x,
-##   file = here("models", paste0("ffdur_een_r", .y))
-##   ))
+  full_ms <- sel_data %>%
+    map(~ brm(frm,
+      family = lognormal(),
+      prior = priors,
+      iter = 4000, data = .x,
+      file = here("models", paste0(dv_name, "_r", .x$region[1]))
+    ))
 
 
-## ffdurs_geen <- dfs[6:8] %>%
-##   map(~ filter(., quan_cond == "GEEN")) %>%
-##   map(~ select(., region:item, ffdur, cond, typic, interf)) %>%
-##   imap(~ brm(frm,
-##   family = lognormal(),
-##   prior = priors,
-##   iter = 4000,
-##   data = .x,
-##   file = here("models", paste0("ffdur_geen_r", .y))
-##   ))
+  frm <- formula(~ 1 + typic * interf +
+    (1 + typic * interf | item) +
+    (1 + typic * interf | subj)) %>%
+    update.formula(paste0(dv_name, "~ . "))
 
+  sel_data <- map(sel_data, ~ select(., -quants))
 
+  split_ms <- map(sel_data, ~ split(., .$quan_cond)) %>%
+    map(~ imap(., ~ brm(frm,
+                        family = lognormal(),
+                        prior = priors,
+                        iter = 4000,
+                        data = .x,
+                        file = here("models",
+                                    paste0(dv_name, "_",
+                                           tolower(.y), "_r", .x$region[1]))
+    )))
+  return(list(full_models = full_ms, split_models = split_ms))
+}
 
-## rrdurs <- map(dfs, ~ select(., -(ffdur:rr))) %>%
-##   map( ~ mutate(., rrdur = if_else(rrdur == 0, 1, rrdur))) %>%
-##   imap(~ brm(rrdur ~ 1 + quants + typic + interf + quant_x_typic +
-##     quant_x_inter + quant_x_interf_TYP + quant_x_interf_ATY +
-##     (1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-##       quant_x_interf_TYP + quant_x_interf_ATY | subj) +
-##     (1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-##       quant_x_interf_TYP + quant_x_interf_ATY | item),
-##   family = lognormal(),
-##   prior = priors,
-##   iter = 4000,
-##   data = .x,
-##   file = here("models", paste0("rrdur_r", .y))
-##   ))
+fit_models(dfs, "rrdur")
 
-## REMEMBER different priors
-##
-## rrs <- map(dfs, ~ select(., -(ffdur:gdur), -rrdur)) %>%
-##   imap(~ brm(rr ~ 1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-##     quant_x_interf_TYP + quant_x_interf_ATY +
-##     (1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-##       quant_x_interf_TYP + quant_x_interf_ATY | subj) +
-##     (1 + quants + typic + interf + quant_x_typic + quant_x_inter +
-##       quant_x_interf_TYP + quant_x_interf_ATY | item),
-##   family = binomial(link = "probit"),
-##   prior = priors,
-##   iter = 4000,
-##   data = .x,
-##   file = here("models", paste0("rr_r", .y))
-##   ))
-
-
-l2 <- list(
-  list(num = 1:3,     letters[1:3]),
-  list(num = 101:103, letters[4:6]),
-  list()
-)
-
-l2 %>%
+vars_late <- c("gdur", "tgdur", "rpdur")
+map(vars_late, ~ fit_models(dfs[6:8], .))
