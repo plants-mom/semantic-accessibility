@@ -1,0 +1,156 @@
+---
+title: eye-tracking models
+author: jw
+output: html_document
+---
+
+```{r cod1, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE}
+
+here::i_am("doc/models_summary.Rmd")
+
+library(here)
+library(knitr)
+library(dplyr)
+library(purrr)
+library(readr)
+
+opts_chunk$set(echo = FALSE, results = "asis")
+
+res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
+  map_dfr(read_csv, .id = "source")
+
+
+```
+
+
+Contrasts:
+
+```{r coding, eval = FALSE, include = TRUE, echo = TRUE, results = "markup"}
+
+mutate(
+    cond = case_when(
+      quan_cond == "EEN" & subj_cond == "MATCH" & obj_cond == "MATCH" ~ "a",
+      quan_cond == "EEN" & subj_cond == "MATCH" & obj_cond == "MIS" ~ "b",
+      quan_cond == "EEN" & subj_cond == "MIS" & obj_cond == "MATCH" ~ "c",
+      quan_cond == "EEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "d",
+      quan_cond == "GEEN" & subj_cond == "MATCH" & obj_cond == "MATCH" ~ "e",
+      quan_cond == "GEEN" & subj_cond == "MATCH" & obj_cond == "MIS" ~ "f",
+      quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MATCH" ~ "g",
+      quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
+    ),
+    quants = ifelse(quan_cond == "EEN", -1, 1),
+    typic = ifelse(cond %in% c("a", "b", "e", "f"), -1, 1),
+    interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
+  )
+
+```
+
+
+
+## Total fixation duration
+
+Total fixations, all regions.
+All regions (6 is 6-7, 7 is 8, 8 is 9).
+
+Full models.
+
+```{r tot }
+res %>%
+  filter(endsWith(source, "totfixdur_full_models.csv")) %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+Models on data split per quantifier.
+
+```{r tot2 }
+res %>%
+  filter(endsWith(source, "totfixdur_split_models.csv")) %>%
+  select(-source) %>%
+  kable()
+```
+
+## Re-reading duration
+
+Data was excluded when the subj did not re-read the region.
+All regions (6 is 6-7, 7 is 8, 8 is 9).
+
+Full models.
+
+```{r rrdur }
+res %>%
+  filter(endsWith(source, "rrdur_full_models.csv")) %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+Models on data split per quantifier.
+
+```{r rrdur2 }
+res %>%
+  filter(endsWith(source, "rrdur_split_models.csv")) %>%
+  select(-source) %>%
+  kable()
+```
+
+## First pass regression path
+
+`rpdur`. Only if `> 0`. Full models.
+All regions (6 is 6-7, 7 is 8, 8 is 9).
+
+```{r rpdur }
+res %>%
+  filter(endsWith(source, "rpdur_full_models.csv")) %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+Models on data split per quantifier. 
+
+```{r rpdur2 }
+res %>%
+  filter(endsWith(source, "rpdur_split_models.csv")) %>%
+  select(-source) %>%
+  kable()
+```
+
+## First pass first gaze
+
+`gdur`. Full models. Only on regions 6-7, 8, 9.
+
+```{r gdur }
+res %>%
+  filter(endsWith(source, "gdur_full_models.csv")) %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+Models on data split per quantifier. Only on regions 6-7, 8, 9.
+
+```{r gdur2 }
+res %>%
+  filter(endsWith(source, "gdur_split_models.csv")) %>%
+  select(-source) %>%
+  kable()
+```
+
+## First pass total gaze
+
+`tgdur`. Full models. Only on regions 6-7, 8, 9.
+
+```{r tgdur }
+res %>%
+  filter(endsWith(source, "tgdur_full_models.csv")) %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+Models on data split per quantifier. Only on regions 6-7, 8, 9.
+
+```{r tgdur2 }
+res %>%
+  filter(endsWith(source, "tgdur_split_models.csv")) %>%
+  select(-source) %>%
+  kable()
+```
+
