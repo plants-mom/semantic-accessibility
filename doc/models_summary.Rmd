@@ -13,13 +13,13 @@ library(knitr)
 library(dplyr)
 library(purrr)
 library(readr)
+library(fs)
 
 opts_chunk$set(echo = FALSE, results = "asis")
 
 res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
-  map_dfr(read_csv, .id = "source")
-
-
+  map_dfr(read_csv, .id = "source") %>%
+  mutate(source = path_file(source))
 ```
 
 
@@ -56,7 +56,7 @@ Full models.
 
 ```{r tot }
 res %>%
-  filter(endsWith(source, "totfixdur_full_models.csv")) %>%
+  filter(source == "totfixdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
 ```
@@ -65,7 +65,7 @@ Models on data split per quantifier.
 
 ```{r tot2 }
 res %>%
-  filter(endsWith(source, "totfixdur_split_models.csv")) %>%
+  filter(source == "totfixdur_split_models.csv") %>%
   select(-source) %>%
   kable()
 ```
@@ -79,7 +79,7 @@ Full models.
 
 ```{r rrdur }
 res %>%
-  filter(endsWith(source, "rrdur_full_models.csv")) %>%
+  filter(source == "rrdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
 ```
@@ -88,7 +88,7 @@ Models on data split per quantifier.
 
 ```{r rrdur2 }
 res %>%
-  filter(endsWith(source, "rrdur_split_models.csv")) %>%
+  filter(source == "rrdur_split_models.csv") %>%
   select(-source) %>%
   kable()
 ```
@@ -100,7 +100,7 @@ All regions (6 is 6-7, 7 is 8, 8 is 9).
 
 ```{r rpdur }
 res %>%
-  filter(endsWith(source, "rpdur_full_models.csv")) %>%
+  filter(source == "rpdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
 ```
@@ -109,7 +109,7 @@ Models on data split per quantifier.
 
 ```{r rpdur2 }
 res %>%
-  filter(endsWith(source, "rpdur_split_models.csv")) %>%
+  filter(source == "rpdur_split_models.csv") %>%
   select(-source) %>%
   kable()
 ```
@@ -120,7 +120,7 @@ res %>%
 
 ```{r gdur }
 res %>%
-  filter(endsWith(source, "gdur_full_models.csv")) %>%
+  filter(source == "gdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
 ```
@@ -129,7 +129,7 @@ Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
 ```{r gdur2 }
 res %>%
-  filter(endsWith(source, "gdur_split_models.csv")) %>%
+  filter(source == "gdur_split_models.csv") %>%
   select(-source) %>%
   kable()
 ```
@@ -140,7 +140,7 @@ res %>%
 
 ```{r tgdur }
 res %>%
-  filter(endsWith(source, "tgdur_full_models.csv")) %>%
+  filter(source == "tgdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
 ```
@@ -149,7 +149,7 @@ Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
 ```{r tgdur2 }
 res %>%
-  filter(endsWith(source, "tgdur_split_models.csv")) %>%
+  filter(source == "tgdur_split_models.csv") %>%
   select(-source) %>%
   kable()
 ```

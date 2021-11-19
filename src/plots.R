@@ -24,7 +24,7 @@ capt <- priors %>%
   select(class, prior) %>%
   kable(format = "simple")
 
-ccc <- with(priors, paste(class, prior, collapse = '<br>'))
+ccc <- with(priors, paste(class, prior, collapse = "<br>"))
 
 scsum_plot <- sim_summary %>%
   filter(stat != "ieff_rt") %>%
@@ -48,7 +48,8 @@ scsum_plot <- sim_summary %>%
       padding = margin(5.5, 5.5, 5.5, 5.5),
       margin = margin(0, 0, 5.5, 0),
       ## linetype = 1
-    ))
+    )
+  )
 
 
 inter <- int_eff <- sim_summary %>%
