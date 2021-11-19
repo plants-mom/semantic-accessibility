@@ -24,7 +24,7 @@ dataf <- read_csv(here("results/allACTFiles_vp_clean.csv")) %>%
       quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
     ),
     quants = ifelse(quan_cond == "EEN", -1, 1),
-    typic = ifelse(cond %in% c("a", "b", "e", "f"), -1, 1),
+    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1),
     interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
     ## additional variables
     rrdur = totfixdur - (gdur - gsacc), # re-reading duration
