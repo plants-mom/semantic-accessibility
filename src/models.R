@@ -79,7 +79,7 @@ if (sys.nframe() == 0) {
   map(dfs, ~ filter(., rrdur > 0)) %>%
     fit_models("rrdur", optimize_mem = TRUE)
 
-  map(dfs, ~ filter(., rpdur > 0)) %>%
+  map(dfs[6:8], ~ filter(., rpdur > 0)) %>%
     fit_models("rpdur", optimize_mem = TRUE)
 
   c("gdur", "tgdur") %>%

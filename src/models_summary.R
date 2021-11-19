@@ -4,6 +4,7 @@ here::i_am("src/models_summary.R")
 library(here)
 library(dplyr)
 library(brms)
+library(bayesplot)
 library(purrr)
 library(tibble)
 library(readr)
@@ -16,6 +17,23 @@ msummary <- function(data_list, id = "region") {
   map(data_list, ~ posterior_summary(., pars = "b_")) %>%
     map(~ rownames_to_column(as.data.frame(.))) %>%
     bind_rows(.id = id)
+}
+
+
+post_plots <- function(var_name, data_list) {
+  make_plot <- compose(
+    ~ mcmc_intervals(.x, prob = 0.95, prob_outer = 1),
+    ~ posterior_samples(., pars = "b_[^I]")
+  )
+  fit_models(data_list, var_name) %>%
+    modify_at(
+      "full_models",
+      ~ map(.x, ~ make_plot(.x))
+    ) %>%
+    modify_at(
+      "split_models",
+      ~ map(.x, ~ map(.x, ~ make_plot(.x)))
+    )
 }
 
 
