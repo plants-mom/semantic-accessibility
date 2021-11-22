@@ -1,12 +1,12 @@
 ##
 ## bayesian models
+## NB: this might sometimes crash, just run it one more time
 ##
 
 here::i_am("src/models.R")
 
 library(here)
 library(dplyr)
-library(readr)
 library(readr)
 library(brms)
 library(purrr)
@@ -24,10 +24,16 @@ fit_models <- function(data_list, dv_name, optimize_mem = FALSE) {
     (1 + typic * interf * quants | subj)) %>%
     update.formula(paste0(dv_name, "~ . "))
 
+  nms <- data_list %>%
+    map(~ select(., region)) %>%
+    map_dfr(unique) %>%
+    pull()
+
   sel_data <- map(
     data_list,
     ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-  )
+  ) %>%
+    set_names(paste0("region_", nms))
 
   full_ms <- sel_data %>%
     map(~ brm(frm,
