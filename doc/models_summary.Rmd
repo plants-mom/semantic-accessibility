@@ -15,7 +15,9 @@ library(purrr)
 library(readr)
 library(fs)
 
-opts_chunk$set(echo = FALSE, results = "asis")
+source(here("src/models_summary.R"))
+
+opts_chunk$set(echo = FALSE, results = "asis", fig.path = here("figs/"))
 
 res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
   map_dfr(read_csv, .id = "source") %>%
@@ -39,26 +41,29 @@ mutate(
       quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
     ),
     quants = ifelse(quan_cond == "EEN", -1, 1),
-    typic = ifelse(cond %in% c("a", "b", "e", "f"), -1, 1),
+    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1),
     interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
-  )
-
 ```
 
+All regions as coded in the file.
 
 
 ## Total fixation duration
 
 Total fixations, all regions.
-All regions (6 is 6-7, 7 is 8, 8 is 9).
 
 Full models.
 
 ```{r tot }
+pps <- post_plots("totfixdur", dfs)
 res %>%
   filter(source == "totfixdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
+```
+
+```{r pps1, results = "markup" }
+pps$full_models
 ```
 
 Models on data split per quantifier.
@@ -70,18 +75,26 @@ res %>%
   kable()
 ```
 
+```{r pps2, results = "markup" }
+pps$split_models
+```
+
 ## Re-reading duration
 
 Data was excluded when the subj did not re-read the region.
-All regions (6 is 6-7, 7 is 8, 8 is 9).
 
 Full models.
 
 ```{r rrdur }
+pps <- post_plots("rrdur", dfs)
 res %>%
   filter(source == "rrdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
+```
+
+```{r pps_rrdur, results = "markup" }
+pps$full_models
 ```
 
 Models on data split per quantifier.
@@ -93,16 +106,25 @@ res %>%
   kable()
 ```
 
+
+```{r pps_rrdur2, results = "markup" }
+pps$split_models
+```
+
 ## First pass regression path
 
 `rpdur`. Only if `> 0`. Full models.
-All regions (6 is 6-7, 7 is 8, 8 is 9).
 
 ```{r rpdur }
+pps <- post_plots("rpdur", dfs[6:8])
 res %>%
   filter(source == "rpdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
+```
+
+```{r pps_rpdur, results = "markup" }
+pps$full_models
 ```
 
 Models on data split per quantifier. 
@@ -114,17 +136,25 @@ res %>%
   kable()
 ```
 
+```{r pps_rpdur2, results = "markup" }
+pps$split_models
+```
+
 ## First pass first gaze
 
 `gdur`. Full models. Only on regions 6-7, 8, 9.
 
 ```{r gdur }
+pps <- post_plots("gdur", dfs[6:8])
 res %>%
   filter(source == "gdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
 ```
 
+```{r pps_gdur, results = "markup" }
+pps$full_models
+```
 Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
 ```{r gdur2 }
@@ -134,15 +164,24 @@ res %>%
   kable()
 ```
 
+```{r pps_gdur2, results = "markup" }
+pps$split_models
+```
+
 ## First pass total gaze
 
 `tgdur`. Full models. Only on regions 6-7, 8, 9.
 
 ```{r tgdur }
+pps <- post_plots("tgdur", dfs[6:8])
 res %>%
   filter(source == "tgdur_full_models.csv") %>%
   select(-source, -quant) %>%
   kable()
+```
+
+```{r pps_tgdur, results = "markup" }
+pps$full_models
 ```
 
 Models on data split per quantifier. Only on regions 6-7, 8, 9.
@@ -154,3 +193,6 @@ res %>%
   kable()
 ```
 
+```{r pps_tgdur2, results = "markup" }
+pps$split_models
+```

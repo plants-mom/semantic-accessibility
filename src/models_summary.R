@@ -7,8 +7,8 @@ library(brms)
 library(bayesplot)
 library(purrr)
 library(tibble)
+library(ggplot2)
 library(readr)
-library(knitr)
 
 source(here("src/models.R"))
 
@@ -52,9 +52,9 @@ write_summary <- function(var_name, data_list = dfs) {
 if (sys.nframe() == 0) {
   ## this takes a lot of memory
   ## probably should be done smarter
-  c("gdur", "tgdur") %>%
+  c("gdur", "tgdur", "rpdur") %>%
     walk(~ write_summary(., dfs[6:8]))
 
-  c("totfixdur", "rrdur", "rpdur") %>%
+  c("totfixdur", "rrdur") %>%
     walk(~ write_summary(., dfs))
 }
