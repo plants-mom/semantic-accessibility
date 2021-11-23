@@ -12,3 +12,10 @@ priors <- c(
   prior(normal(0, 1), class = sd),
   prior(lkj(2), class = cor)
 )
+
+priors_binom <- c(
+  prior(normal(0, 1.5), class = Intercept),
+  prior(normal(0, 1), class = b),
+  prior(normal(0, 1), class = sd),
+  prior(lkj(2), class = cor)
+)
