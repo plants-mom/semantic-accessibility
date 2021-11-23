@@ -36,17 +36,17 @@ post_plots <- function(var_name, data_list) {
     )
 }
 
-
 write_summary <- function(var_name, data_list = dfs) {
-  fm <- fit_models(data_list, var_name)
-  write_csv(
-    msummary(fm$full_models),
-    here("results", paste0(var_name, "_full_models.csv"))
-  )
-  map_dfr(fm$split_models, ~ msummary(., id = "quant"),
-    .id = "region"
-  ) %>%
-    write_csv(here("results", paste0(var_name, "_split_models.csv")))
+  fit_models(data_list, var_name) %>%
+    modify_at("full_models", msummary) %>%
+    modify_at("split_models", ~ map_dfr(., ~ msummary(., id = "quant"),
+      .id = "region"
+    )) %>%
+    iwalk(~
+    write_csv(.x, here(
+      "results",
+      paste0(var_name, "_", .y, ".csv")
+    )))
 }
 
 if (sys.nframe() == 0) {
