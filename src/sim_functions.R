@@ -14,16 +14,16 @@ source(here("src/priors.R"))
 
 
 msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
-                      family, formula) {
+                      family, formula, intercept_above_zero = TRUE) {
   ## TODO nbetas, nsigmas, no_lm_coefs, shoudl be determined from the formula
   betas <- vector(mode = "list", length = nbetas) %>%
     set_names(paste0("beta", seq(nbetas)))
 
   sigma_u <- vector(mode = "list", length = nsigmas) %>%
-    set_names(paste0("beta", seq(nsigmas)))
+    set_names(paste0("sigma_u", seq(nsigmas)))
 
   sigma_w <- vector(mode = "list", length = nsigmas) %>%
-    set_names(paste0("beta", seq(nsigmas)))
+    set_names(paste0("sigma_w", seq(nsigmas)))
 
   rho_u <- rho_w <- NULL # we assume two grouping factors
   # TODO generalise
@@ -38,11 +38,15 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
 
   for (i in 1:nsim) {
     message("iter no", i)
-    tmp <- -1
-    while (tmp < 0) { # sample from a half-normal distribution
-      tmp <- SimFromPrior(priors, class = "Intercept", coef = "")
+    if (intercept_above_zero == TRUE) {
+      tmp <- -1
+      while (tmp < 0) { # sample from a half-normal distribution
+        tmp <- SimFromPrior(priors, class = "Intercept", coef = "")
+      }
+      betas$beta1[i] <- tmp
+    } else {
+      betas$beta1[i] <- SimFromPrior(priors, class = "Intercept", coef = "")
     }
-    betas$beta1[i] <- tmp
     for (j in seq(2, nbetas)) {
       betas[[j]][i] <- SimFromPrior(priors, class = "b")
     }
@@ -93,10 +97,13 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
   rtsimmat <- as_tibble(rtsimmat)
   colnames(lm_coefs) <- colnames(lm_coefs, do.NULL = FALSE, prefix = "sim")
   lm_coefs <- as_tibble(lm_coefs)
+  true_pars <- as_tibble(c(betas, sigma_u, sigma_w))
+  true_pars["rho_u"] <- rho_u
+  true_pars["rho_w"] <- rho_w
 
   return(list(
     fake_data = rtsimmat,
-    ## true_params = true_pars,
+    true_params = true_pars,
     lm_coefs = lm_coefs
   ))
 }
