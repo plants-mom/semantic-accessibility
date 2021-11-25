@@ -8,7 +8,6 @@ library(here)
 library(readr)
 library(purrr)
 library(dplyr)
-library(hypr)
 
 
 dataf <- read_csv(here("results/allACTFiles_vp_clean.csv")) %>%
@@ -28,14 +27,13 @@ dataf <- read_csv(here("results/allACTFiles_vp_clean.csv")) %>%
     interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
     ## additional variables
     rrdur = totfixdur - (gdur - gsacc), # re-reading duration
-    rr = rrdur > 0
+    rr = as.numeric(rrdur > 0)
   )
 
 
 vars <- c("subj", "item", "rpdur", "tgdur", "totfixdur", "gbck", "gdur", "rr", "rrdur")
 
 dataf %>%
-  filter(ffdur != 0) %>%
   select(
     region,
     all_of(vars),
