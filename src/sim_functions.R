@@ -13,8 +13,10 @@ source(here("src/SimFromPrior.R"))
 source(here("src/priors.R"))
 
 
-msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
-                      family, formula, intercept_above_zero = TRUE) {
+msimulate <- function(nsim, simdata, priors, nbetas, nsigmas,
+                      no_lm_coefs, family, formula,
+                      intercept_above_zero = TRUE,
+                      estimates = TRUE) {
   ## TODO nbetas, nsigmas, no_lm_coefs, shoudl be determined from the formula
   betas <- vector(mode = "list", length = nbetas) %>%
     set_names(paste0("beta", seq(nbetas)))
@@ -38,7 +40,7 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
 
   for (i in 1:nsim) {
     if (i %% 100 == 0) {
-      message("iter no", i)
+      message("iter no: ", i, " / ", nsim)
     }
     if (intercept_above_zero == TRUE) {
       tmp <- -1
@@ -84,6 +86,7 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
     )
 
 
+    if (estimates == TRUE) {
     tmp_results <- bind_cols(simdata, rtsimmat[, i],
       .name_repair = "minimal"
     ) %>%
@@ -95,19 +98,29 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
     lm_coefs[, i] <- coef(lm(frm,
       data = tmp_results
     ))
+    }
   }
 
   colnames(rtsimmat) <- colnames(rtsimmat, do.NULL = FALSE, prefix = "sim")
   rtsimmat <- as_tibble(rtsimmat)
-  colnames(lm_coefs) <- colnames(lm_coefs, do.NULL = FALSE, prefix = "sim")
-  lm_coefs <- as_tibble(lm_coefs)
   true_pars <- as_tibble(c(betas, sigma_u, sigma_w))
   true_pars["rho_u"] <- rho_u
   true_pars["rho_w"] <- rho_w
+
+  if (estimates == TRUE) {
+  colnames(lm_coefs) <- colnames(lm_coefs, do.NULL = FALSE, prefix = "sim")
+  lm_coefs <- as_tibble(lm_coefs)
 
   return(list(
     fake_data = rtsimmat,
     true_params = true_pars,
     lm_coefs = lm_coefs
   ))
+  } else {
+
+  return(list(
+    fake_data = rtsimmat,
+    true_params = true_pars
+  ))
+  }
 }
