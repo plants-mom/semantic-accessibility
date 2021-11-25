@@ -37,7 +37,9 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
   rtsimmat <- matrix(NA, nrow(simdata), nsim)
 
   for (i in 1:nsim) {
-    message("iter no", i)
+    if (i %% 100 == 0) {
+      message("iter no", i)
+    }
     if (intercept_above_zero == TRUE) {
       tmp <- -1
       while (tmp < 0) { # sample from a half-normal distribution
@@ -82,7 +84,9 @@ msimulate <- function(nsim, simdata, priors, nbetas, nsigmas, no_lm_coefs,
     )
 
 
-    tmp_results <- bind_cols(simdata, rtsimmat[, i]) %>%
+    tmp_results <- bind_cols(simdata, rtsimmat[, i],
+      .name_repair = "minimal"
+    ) %>%
       rename(result = last_col())
 
     frm <- update.formula(formula, "result ~ .")
