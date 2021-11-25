@@ -15,14 +15,17 @@ options(mc.cores = parallel::detectCores())
 
 source(here("src/priors.R"))
 
-files <- list.files(here("results"), pattern = "region[0-9].csv")
-dfs <- map(files, ~ read_csv(here("results", .)))
+dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
+  map(~ read_csv(here("results", .)))
 
-fit_models <- function(data_list, dv_name, optimize_mem = FALSE) {
+fit_models <- function(data_list, dv_name, priors, remove_zeros = TRUE, optimize_mem = FALSE) {
   frm <- formula(~ 1 + typic * interf * quants +
     (1 + typic * interf * quants | item) +
     (1 + typic * interf * quants | subj)) %>%
     update.formula(paste0(dv_name, "~ . "))
+
+  family_ <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
+
 
   nms <- data_list %>%
     map(~ select(., region)) %>%
@@ -32,12 +35,15 @@ fit_models <- function(data_list, dv_name, optimize_mem = FALSE) {
   sel_data <- map(
     data_list,
     ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-  ) %>%
-    set_names(paste0("region_", nms))
+  ) %>% set_names(paste0("region_", nms))
+
+  if (remove_zeros == TRUE) {
+    sel_data <- map(sel_data, ~ filter(., {{ dv_name }} > 0))
+  }
 
   full_ms <- sel_data %>%
     map(~ brm(frm,
-      family = lognormal(),
+      family = family_,
       prior = priors,
       iter = 4000, data = .x,
       file = here("models", paste0(dv_name, "_r", .x$region[1]))
@@ -57,7 +63,7 @@ fit_models <- function(data_list, dv_name, optimize_mem = FALSE) {
 
   split_ms <- map(sel_data, ~ split(., .$quan_cond)) %>%
     map(~ imap(., ~ brm(frm,
-      family = lognormal(),
+      family = family_,
       prior = priors,
       iter = 4000,
       data = .x,
@@ -80,14 +86,18 @@ fit_models <- function(data_list, dv_name, optimize_mem = FALSE) {
 
 
 if (sys.nframe() == 0) {
-  fit_models(dfs, "totfixdur", optimize_mem = TRUE)
+  c("rrdur", "totfixdur") %>%
+    walk(~ fit_models(dfs, ., priors = priors, optimize_mem = TRUE))
 
-  map(dfs, ~ filter(., rrdur > 0)) %>%
-    fit_models("rrdur", optimize_mem = TRUE)
+  map(dfs, ~ filter(., gbck != 0)) %>%
+    map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
+    fit_models("gbck", priors = priors_binom,
+               remove_zeros = FALSE, optimize_mem = TRUE)
 
-  map(dfs[6:8], ~ filter(., rpdur > 0)) %>%
-    fit_models("rpdur", optimize_mem = TRUE)
+    fit_models("rr", dfs, priors = priors_binom,
+               remove_zeros = FALSE, optimize_mem = TRUE)
 
-  c("gdur", "tgdur") %>%
-    walk(~ fit_models(dfs[6:8], ., optimize_mem = TRUE))
+  c("gdur", "tgdur", "rpdur") %>%
+    walk(~ fit_models(dfs[6:8], ., priors = priors, optimize_mem = TRUE))
 }
+

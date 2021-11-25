@@ -92,7 +92,7 @@ ppc_params_plots <- function() {
 
 if (sys.nframe() == 0) {
 
+  ppc_params_plots()
 }
 
 
-ppc_params_plots()
