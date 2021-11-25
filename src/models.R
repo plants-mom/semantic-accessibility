@@ -36,13 +36,23 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
   ## message(dv_name, typeof(dv_name))
   ## message(str(data_list))
 
+
+  if (remove_zeros == TRUE) {
+
+  sel_data <- map(
+    data_list,
+    ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
+  ) %>%
+    map(.x = ., ~ filter(., .data[[dv_name]] > 0)) %>%
+    set_names(paste0("region_", nms))
+    message({{ dv_name } })
+  } else {
+
   sel_data <- map(
     data_list,
     ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
   ) %>% set_names(paste0("region_", nms))
 
-  if (remove_zeros == TRUE) {
-    sel_data <- map(sel_data, ~ filter(., {{ dv_name }} > 0))
   }
 
   ## return(sel_data)
