@@ -18,7 +18,8 @@ source(here("src/priors.R"))
 dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
   map(~ read_csv(here("results", .)))
 
-fit_models <- function(data_list, dv_name, priors, remove_zeros = TRUE, optimize_mem = FALSE) {
+fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
+                       optimize_mem = FALSE) {
   frm <- formula(~ 1 + typic * interf * quants +
     (1 + typic * interf * quants | item) +
     (1 + typic * interf * quants | subj)) %>%
@@ -32,6 +33,9 @@ fit_models <- function(data_list, dv_name, priors, remove_zeros = TRUE, optimize
     map_dfr(unique) %>%
     pull()
 
+  ## message(dv_name, typeof(dv_name))
+  ## message(str(data_list))
+
   sel_data <- map(
     data_list,
     ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
@@ -41,10 +45,12 @@ fit_models <- function(data_list, dv_name, priors, remove_zeros = TRUE, optimize
     sel_data <- map(sel_data, ~ filter(., {{ dv_name }} > 0))
   }
 
+  ## return(sel_data)
+
   full_ms <- sel_data %>%
     map(~ brm(frm,
       family = family_,
-      prior = priors,
+      prior = .priors,
       iter = 4000, data = .x,
       file = here("models", paste0(dv_name, "_r", .x$region[1]))
     ))
@@ -64,7 +70,7 @@ fit_models <- function(data_list, dv_name, priors, remove_zeros = TRUE, optimize
   split_ms <- map(sel_data, ~ split(., .$quan_cond)) %>%
     map(~ imap(., ~ brm(frm,
       family = family_,
-      prior = priors,
+      prior = .priors,
       iter = 4000,
       data = .x,
       file = here(
@@ -87,17 +93,20 @@ fit_models <- function(data_list, dv_name, priors, remove_zeros = TRUE, optimize
 
 if (sys.nframe() == 0) {
   c("rrdur", "totfixdur") %>%
-    walk(~ fit_models(dfs, ., priors = priors, optimize_mem = TRUE))
+    walk(~ fit_models(dfs, ., .priors = priors, optimize_mem = TRUE))
 
   map(dfs, ~ filter(., gbck != 0)) %>%
     map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
-    fit_models("gbck", priors = priors_binom,
-               remove_zeros = FALSE, optimize_mem = TRUE)
+    fit_models(., "gbck",
+      .priors = priors_binom,
+      remove_zeros = FALSE, optimize_mem = TRUE
+    )
 
-    fit_models("rr", dfs, priors = priors_binom,
-               remove_zeros = FALSE, optimize_mem = TRUE)
+  fit_models(dfs, "rr",
+    .priors = priors_binom,
+    remove_zeros = FALSE, optimize_mem = TRUE
+  )
 
   c("gdur", "tgdur", "rpdur") %>%
-    walk(~ fit_models(dfs[6:8], ., priors = priors, optimize_mem = TRUE))
+    walk(~ fit_models(dfs[6:8], ., .priors = priors, optimize_mem = TRUE))
 }
-
