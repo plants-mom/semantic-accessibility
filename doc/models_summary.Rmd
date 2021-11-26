@@ -1,7 +1,10 @@
 ---
 title: eye-tracking models
 author: jw
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r cod1, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE}
@@ -17,7 +20,7 @@ library(fs)
 
 source(here("src/models_summary.R"))
 
-opts_chunk$set(echo = FALSE, results = "asis", fig.path = here("figs/"))
+opts_chunk$set(echo = FALSE, results = "asis", fig.path = here("figs/"), cache = TRUE)
 
 res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
   map_dfr(read_csv, .id = "source") %>%
@@ -45,7 +48,7 @@ mutate(
     interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
 ```
 
-All regions as coded in the file.
+All regions as coded in the file. On the plots the thick line signifies the 0.95 probability interval, the thin line probability of 1.
 
 
 ## Total fixation duration
@@ -55,7 +58,6 @@ Total fixations, all regions.
 Full models.
 
 ```{r tot }
-pps <- post_plots("totfixdur", dfs)
 res %>%
   filter(source == "totfixdur_full_models.csv") %>%
   select(-source, -quant) %>%
@@ -63,7 +65,7 @@ res %>%
 ```
 
 ```{r pps1, results = "markup" }
-pps$full_models
+post_plots("totfixdur", dfs, .return = "full_models")$full_models
 ```
 
 Models on data split per quantifier.
@@ -76,7 +78,7 @@ res %>%
 ```
 
 ```{r pps2, results = "markup" }
-pps$split_models
+post_plots("totfixdur", dfs, .return = "split_models")$split_models
 ```
 
 ## Re-reading duration
@@ -86,7 +88,6 @@ Data was excluded when the subj did not re-read the region.
 Full models.
 
 ```{r rrdur }
-pps <- post_plots("rrdur", dfs)
 res %>%
   filter(source == "rrdur_full_models.csv") %>%
   select(-source, -quant) %>%
@@ -94,7 +95,7 @@ res %>%
 ```
 
 ```{r pps_rrdur, results = "markup" }
-pps$full_models
+post_plots("rrdur", dfs, .return = "full_models")$full_models
 ```
 
 Models on data split per quantifier.
@@ -108,7 +109,7 @@ res %>%
 
 
 ```{r pps_rrdur2, results = "markup" }
-pps$split_models
+post_plots("rrdur", dfs, .return = "split_models")$split_models
 ```
 
 ## First pass regression path
@@ -116,7 +117,6 @@ pps$split_models
 `rpdur`. Only if `> 0`. Full models.
 
 ```{r rpdur }
-pps <- post_plots("rpdur", dfs[6:8])
 res %>%
   filter(source == "rpdur_full_models.csv") %>%
   select(-source, -quant) %>%
@@ -124,7 +124,7 @@ res %>%
 ```
 
 ```{r pps_rpdur, results = "markup" }
-pps$full_models
+post_plots("rpdur", dfs[6:8], .return = "full_models")$full_models
 ```
 
 Models on data split per quantifier. 
@@ -137,7 +137,7 @@ res %>%
 ```
 
 ```{r pps_rpdur2, results = "markup" }
-pps$split_models
+post_plots("rpdur", dfs[6:8], .return = "split_models")$split_models
 ```
 
 ## First pass first gaze
@@ -145,7 +145,6 @@ pps$split_models
 `gdur`. Full models. Only on regions 6-7, 8, 9.
 
 ```{r gdur }
-pps <- post_plots("gdur", dfs[6:8])
 res %>%
   filter(source == "gdur_full_models.csv") %>%
   select(-source, -quant) %>%
@@ -153,7 +152,7 @@ res %>%
 ```
 
 ```{r pps_gdur, results = "markup" }
-pps$full_models
+post_plots("gdur", dfs[6:8], .return = "full_models")$full_models
 ```
 Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
@@ -165,7 +164,7 @@ res %>%
 ```
 
 ```{r pps_gdur2, results = "markup" }
-pps$split_models
+post_plots("gdur", dfs[6:8], .return = "split_models")$split_models
 ```
 
 ## First pass total gaze
@@ -173,7 +172,6 @@ pps$split_models
 `tgdur`. Full models. Only on regions 6-7, 8, 9.
 
 ```{r tgdur }
-pps <- post_plots("tgdur", dfs[6:8])
 res %>%
   filter(source == "tgdur_full_models.csv") %>%
   select(-source, -quant) %>%
@@ -181,7 +179,7 @@ res %>%
 ```
 
 ```{r pps_tgdur, results = "markup" }
-pps$full_models
+post_plots("tgdur", dfs[6:8], .return = "full_models")$full_models
 ```
 
 Models on data split per quantifier. Only on regions 6-7, 8, 9.
@@ -194,5 +192,63 @@ res %>%
 ```
 
 ```{r pps_tgdur2, results = "markup" }
-pps$split_models
+post_plots("tgdur", dfs[6:8], .return = "split_models")$split_models
+```
+
+## Regressions
+
+Probability of regression, `abs(gbck - 2)`. Bernoulli likelihood with logistic link, results on the logistic scale.
+Full models.
+
+```{r gbck }
+res %>%
+  filter(source == "gbck_full_models.csv") %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+```{r pps_gbck, results = "markup" }
+post_plots("gbck", dfs, .return = "full_models")$full_models
+```
+
+Models on data split per quantifier.
+
+```{r gbck_2 }
+res %>%
+  filter(source == "gbck_split_models.csv") %>%
+  select(-source) %>%
+  kable()
+```
+
+```{r pps_gbck_2, results = "markup" }
+post_plots("gbck", dfs, .return = "split_models")$split_models
+```
+
+## Re-readings
+
+`rr`. probability of re-reading
+Bernoulli likelihood with logistic link, results on the logistic scale.
+
+```{r rr }
+res %>%
+  filter(source == "rr_full_models.csv") %>%
+  select(-source, -quant) %>%
+  kable()
+```
+
+```{r pps_rr, results = "markup" }
+post_plots("rr", dfs, .return = "full_models")$full_models
+```
+
+Models on data split per quantifier. 
+
+```{r rr_2 }
+res %>%
+  filter(source == "rr_split_models.csv") %>%
+  select(-source) %>%
+  kable()
+```
+
+```{r pps_rr_2, results = "markup" }
+post_plots("rr", dfs, .return = "split_models")$split_models
 ```
