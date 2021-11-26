@@ -20,12 +20,12 @@ msummary <- function(data_list, id = "region") {
 }
 
 
-post_plots <- function(var_name, data_list) {
+post_plots <- function(var_name, data_list, ...) {
   make_plot <- compose(
     ~ mcmc_intervals(.x, prob = 0.95, prob_outer = 1),
     ~ posterior_samples(., pars = "b_[^I]")
   )
-  fit_models(data_list, var_name) %>%
+  fit_models(data_list, var_name, ...) %>%
     modify_at(
       "full_models",
       ~ map(.x, ~ make_plot(.x))
@@ -36,8 +36,8 @@ post_plots <- function(var_name, data_list) {
     )
 }
 
-write_summary <- function(var_name, data_list = dfs) {
-  fit_models(data_list, var_name) %>%
+write_summary <- function(var_name, data_list = dfs, ...) {
+  fit_models(data_list, var_name, ...) %>%
     modify_at("full_models", msummary) %>%
     modify_at("split_models", ~ map_dfr(., ~ msummary(., id = "quant"),
       .id = "region"
@@ -52,9 +52,15 @@ write_summary <- function(var_name, data_list = dfs) {
 if (sys.nframe() == 0) {
   ## this takes a lot of memory
   ## probably should be done smarter
-  c("gdur", "tgdur", "rpdur") %>%
-    walk(~ write_summary(., dfs[6:8]))
+  ## c("gdur", "tgdur", "rpdur") %>%
+  ##   walk(~ write_summary(., dfs[6:8]))
 
-  c("totfixdur", "rrdur") %>%
-    walk(~ write_summary(., dfs))
+  ## c("totfixdur", "rrdur", "gbck", "rr") %>%
+  ##   walk(~ write_summary(., dfs))
+
+  ## c("rr") %>%
+  ##   walk(~ write_summary(., dfs, .return = "split_models"))
+
+  c("rr") %>%
+    walk(~ write_summary(., dfs, .return = "full_models"))
 }

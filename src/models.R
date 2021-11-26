@@ -19,7 +19,17 @@ dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
   map(~ read_csv(here("results", .)))
 
 fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
+                       .return = c(
+                         "both", "none", "split_models",
+                         "full_models"
+                       ),
                        optimize_mem = FALSE) {
+  ##
+  ## I leave optimize_mem so it lack won't bite me somewhere
+  ##
+
+  .return <- match.arg(.return)
+
   frm <- formula(~ 1 + typic * interf * quants +
     (1 + typic * interf * quants | item) +
     (1 + typic * interf * quants | subj)) %>%
@@ -38,21 +48,17 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
 
 
   if (remove_zeros == TRUE) {
-
-  sel_data <- map(
-    data_list,
-    ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-  ) %>%
-    map(.x = ., ~ filter(., .data[[dv_name]] > 0)) %>%
-    set_names(paste0("region_", nms))
-    message({{ dv_name } })
+    sel_data <- map(
+      data_list,
+      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
+    ) %>%
+      map(.x = ., ~ filter(., .data[[dv_name]] > 0)) %>%
+      set_names(paste0("region_", nms))
   } else {
-
-  sel_data <- map(
-    data_list,
-    ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-  ) %>% set_names(paste0("region_", nms))
-
+    sel_data <- map(
+      data_list,
+      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
+    ) %>% set_names(paste0("region_", nms))
   }
 
   ## return(sel_data)
@@ -65,9 +71,11 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
       file = here("models", paste0(dv_name, "_r", .x$region[1]))
     ))
 
-  if (optimize_mem == TRUE) {
+  if (optimize_mem == TRUE || .return %in% c("none", "split_models")) {
     rm(full_ms)
     gc()
+  } else if (.return == "full_models") {
+    return(list(full_models = full_ms))
   }
 
   frm <- formula(~ 1 + typic * interf +
@@ -92,10 +100,12 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
       )
     )))
 
-  if (optimize_mem == TRUE) {
+  if (optimize_mem == TRUE || .return == "none") {
     rm(split_ms, sel_data, frm)
     gc()
-  } else {
+  } else if (.return == "split_models") {
+    return(list(split_models = split_ms))
+  } else if (.return == "both") {
     return(list(full_models = full_ms, split_models = split_ms))
   }
 }
