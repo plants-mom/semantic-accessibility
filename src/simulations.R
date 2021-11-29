@@ -48,7 +48,9 @@ ppc_lognorm <- function(.number_sim = number_sim,
     )
 
   if (write == TRUE) {
-    write.csv(sim_summary, here("results/sim_summary_lognorm.csv"),
+    write.csv(sim_summary,
+              here("results",
+                   paste0("sim_summary_lognorm_", Sys.Date(), ".csv")),
       row.names = FALSE
     )
   }
@@ -64,12 +66,13 @@ ppc_binom <- function(.number_sim = number_sim, .simdata = simdata) {
     "binomial", frm, intercept_above_zero = FALSE, estimates = FALSE
   )
 
-  write_csv(simd$true_params, here("results/ppc_params_sample_binom.csv"))
+  write_csv(simd$true_params,
+            here("results",
+                 paste0("ppc_params_sample_binom_", Sys.Date(), ".csv")))
   ## return(simd)
 }
 
 if (sys.nframe() == 0) {
-  number_sim <- 1e4
   set.seed(123)
 
   expdesign <- fixed.factor("quan_cond", levels = c("EEN", "GEEN")) +
@@ -96,5 +99,5 @@ if (sys.nframe() == 0) {
     )
 
 
-  ppc_binom()
+  ppc_binom(1e3)
 }

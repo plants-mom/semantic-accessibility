@@ -13,10 +13,7 @@ library(purrr)
 
 options(mc.cores = parallel::detectCores())
 
-source(here("src/priors.R"))
 
-dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
-  map(~ read_csv(here("results", .)))
 
 fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
                        .return = c(
@@ -112,6 +109,11 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
 
 
 if (sys.nframe() == 0) {
+  source(here("src/priors.R"))
+
+  dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
+    map(~ read_csv(here("results", .)))
+
   c("rrdur", "totfixdur") %>%
     walk(~ fit_models(dfs, ., .priors = priors, optimize_mem = TRUE))
 

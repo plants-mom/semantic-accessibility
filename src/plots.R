@@ -71,12 +71,9 @@ ppc_rt_plots <- function() {
   ggsave(here("figs/prior_pred_6.png"), pp_checks, width = 16, height = 8)
 }
 
-ppc_params_plots <- function() {
+ppc_params_plots <- function(simdata) {
 
   ## ppc prior sample binomial
-  ##
-
-  simdata <- read_csv(here("results/ppc_params_sample_binom.csv"))
 
   simdata %>%
     modify(rethinking::inv_logit) %>%
