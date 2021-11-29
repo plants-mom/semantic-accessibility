@@ -19,6 +19,10 @@ library(readr)
 library(fs)
 
 source(here("src/models_summary.R"))
+source(here("src/models.R"))
+
+dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
+  map(~ read_csv(here("results", .)))
 
 opts_chunk$set(echo = FALSE, results = "asis", fig.path = here("figs/"), cache = TRUE)
 
@@ -66,7 +70,10 @@ res %>%
 
 ```{r pps1, results = "markup" }
 post_plots("totfixdur", dfs, .return = "full_models")$full_models
+post_plots("totfixdur", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 
 Models on data split per quantifier.
 
@@ -79,6 +86,7 @@ res %>%
 
 ```{r pps2, results = "markup" }
 post_plots("totfixdur", dfs, .return = "split_models")$split_models
+post_plots("totfixdur", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
 ```
 
 ## Re-reading duration
@@ -96,7 +104,10 @@ res %>%
 
 ```{r pps_rrdur, results = "markup" }
 post_plots("rrdur", dfs, .return = "full_models")$full_models
+post_plots("rrdur", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 
 Models on data split per quantifier.
 
@@ -110,6 +121,7 @@ res %>%
 
 ```{r pps_rrdur2, results = "markup" }
 post_plots("rrdur", dfs, .return = "split_models")$split_models
+post_plots("rrdur", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
 ```
 
 ## First pass regression path
@@ -125,7 +137,10 @@ res %>%
 
 ```{r pps_rpdur, results = "markup" }
 post_plots("rpdur", dfs[6:8], .return = "full_models")$full_models
+post_plots("rpdur", dfs[6:8], make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 
 Models on data split per quantifier. 
 
@@ -138,6 +153,7 @@ res %>%
 
 ```{r pps_rpdur2, results = "markup" }
 post_plots("rpdur", dfs[6:8], .return = "split_models")$split_models
+post_plots("rpdur", dfs[6:8], make_plot_func = pp_check, .return = "split_models")$split_models
 ```
 
 ## First pass first gaze
@@ -153,7 +169,10 @@ res %>%
 
 ```{r pps_gdur, results = "markup" }
 post_plots("gdur", dfs[6:8], .return = "full_models")$full_models
+post_plots("gdur", dfs[6:8], make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
 ```{r gdur2 }
@@ -165,6 +184,7 @@ res %>%
 
 ```{r pps_gdur2, results = "markup" }
 post_plots("gdur", dfs[6:8], .return = "split_models")$split_models
+post_plots("gdur", dfs[6:8], make_plot_func = pp_check, .return = "split_models")$split_models
 ```
 
 ## First pass total gaze
@@ -180,7 +200,10 @@ res %>%
 
 ```{r pps_tgdur, results = "markup" }
 post_plots("tgdur", dfs[6:8], .return = "full_models")$full_models
+post_plots("tgdur", dfs[6:8], make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 
 Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
@@ -193,6 +216,7 @@ res %>%
 
 ```{r pps_tgdur2, results = "markup" }
 post_plots("tgdur", dfs[6:8], .return = "split_models")$split_models
+post_plots("tgdur", dfs[6:8], make_plot_func = pp_check, .return = "split_models")$split_models
 ```
 
 ## Regressions
@@ -209,7 +233,10 @@ res %>%
 
 ```{r pps_gbck, results = "markup" }
 post_plots("gbck", dfs, .return = "full_models")$full_models
+post_plots("gbck", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 
 Models on data split per quantifier.
 
@@ -222,6 +249,7 @@ res %>%
 
 ```{r pps_gbck_2, results = "markup" }
 post_plots("gbck", dfs, .return = "split_models")$split_models
+post_plots("gbck", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
 ```
 
 ## Re-readings
@@ -238,7 +266,10 @@ res %>%
 
 ```{r pps_rr, results = "markup" }
 post_plots("rr", dfs, .return = "full_models")$full_models
+post_plots("rr", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
 ```
+
+### Split models
 
 Models on data split per quantifier. 
 
@@ -251,4 +282,5 @@ res %>%
 
 ```{r pps_rr_2, results = "markup" }
 post_plots("rr", dfs, .return = "split_models")$split_models
+post_plots("rr", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
 ```

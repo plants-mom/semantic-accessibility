@@ -10,7 +10,6 @@ library(tibble)
 library(ggplot2)
 library(readr)
 
-source(here("src/models.R"))
 
 
 msummary <- function(data_list, id = "region") {
@@ -19,20 +18,21 @@ msummary <- function(data_list, id = "region") {
     bind_rows(.id = id)
 }
 
+make_plot <- compose(
+  ~ mcmc_intervals(.x, prob = 0.95, prob_outer = 1),
+  ~ posterior_samples(., pars = "b_[^I]")
+)
 
-post_plots <- function(var_name, data_list, ...) {
-  make_plot <- compose(
-    ~ mcmc_intervals(.x, prob = 0.95, prob_outer = 1),
-    ~ posterior_samples(., pars = "b_[^I]")
-  )
+post_plots <- function(var_name, data_list,
+                       make_plot_func = make_plot, ...) {
   fit_models(data_list, var_name, ...) %>%
     modify_at(
       "full_models",
-      ~ map(.x, ~ make_plot(.x))
+      ~ map(.x, ~ make_plot_func(.x))
     ) %>%
     modify_at(
       "split_models",
-      ~ map(.x, ~ map(.x, ~ make_plot(.x)))
+      ~ map(.x, ~ map(.x, ~ make_plot_func(.x)))
     )
 }
 
@@ -50,6 +50,7 @@ write_summary <- function(var_name, data_list = dfs, ...) {
 }
 
 if (sys.nframe() == 0) {
+  source(here("src/models.R"))
   ## this takes a lot of memory
   ## probably should be done smarter
   ## c("gdur", "tgdur", "rpdur") %>%
