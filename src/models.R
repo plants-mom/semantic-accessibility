@@ -107,6 +107,16 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
   }
 }
 
+get_model <- function(dv_name, region, type = "full_models") {
+  list.files(here("results"), pattern = "region[0-9].csv") %>%
+    map(~ read_csv(here("results", .))) %>%
+    .[region] %>%
+    fit_models(., dv_name,
+      .return = type
+    ) %>%
+    pluck(type, paste0("region_", region))
+}
+
 
 if (sys.nframe() == 0) {
   source(here("src/priors.R"))
