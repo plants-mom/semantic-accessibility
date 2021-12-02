@@ -68,10 +68,12 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
       file = here("models", paste0(dv_name, "_r", .x$region[1]))
     ))
 
+
   if (optimize_mem == TRUE || .return %in% c("none", "split_models")) {
     rm(full_ms)
     gc()
   } else if (.return == "full_models") {
+    rm(sel_data, nms)
     return(list(full_models = full_ms))
   }
 

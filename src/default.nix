@@ -10,6 +10,19 @@ let
     overlays = [ (import ./rWrapper2.nix) (import ./here-overlay.nix) ];
   };
 
+  rethinking = (import ./rethinking.nix pkgs).rethinking;
+  modDesignr = (import ./designr/designr-local.nix pkgs).designr;
+
 in pkgs.rWrapper2.override {
-  packages = with pkgs.rPackages; [ here brms dplyr readr designr ];
+  packages = with pkgs.rPackages; [
+    brms
+    dplyr
+    here
+    modDesignr
+    readr
+    rethinking
+    tidyr
+    bridgesampling
+    fs
+  ];
 }

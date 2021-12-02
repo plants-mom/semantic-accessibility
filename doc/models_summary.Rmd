@@ -31,6 +31,17 @@ res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
   mutate(source = path_file(source))
 ```
 
+there are 8 means in the experiment (quantifier, subject, object conditions):
+```
+a) EEN,  MATCH, MATCH (typical,  int)   -- prof ... a  son      ... he
+b) EEN,  MATCH, MIS   (typical,  noint) -- prof ... a  daughter ... he
+c) EEN,  MIS,   MATCH (atypical, int)   -- prof ... a  daughter ... she
+d) EEN,  MIS,   MIS   (atypical, noint) -- prof ... a  son      ... she
+e) GEEN, MATCH, MATCH (typical,  int)   -- prof ... no son      ... he
+f) GEEN, MATCH, MIS   (typical,  noint) -- prof ... no daughter ... he
+g) GEEN, MIS,   MATCH (atypical, int)   -- prof ... no daughter ... she
+h) GEEN, MIS,   MIS   (atypical, noint) -- prof ... no son      ... she
+```
 
 Contrasts:
 

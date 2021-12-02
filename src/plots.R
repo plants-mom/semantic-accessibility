@@ -76,6 +76,7 @@ ppc_params_plots <- function(simdata) {
   ## ppc prior sample binomial
 
   simdata %>%
+    read_csv() %>%
     modify(rethinking::inv_logit) %>%
     pivot_longer(cols = everything(), names_to = "parameter") %>%
     ggplot(., aes(value)) +
@@ -89,7 +90,7 @@ ppc_params_plots <- function(simdata) {
 
 if (sys.nframe() == 0) {
 
-  ppc_params_plots()
+  ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv"))
 }
 
 
