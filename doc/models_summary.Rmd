@@ -31,6 +31,8 @@ res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
   mutate(source = path_file(source))
 ```
 
+> ‘The professor has [a/no] [son/daughter]. The past few years, [he/she] unfortunately had to work during all the holidays.
+
 there are 8 means in the experiment (quantifier, subject, object conditions):
 ```
 a) EEN,  MATCH, MATCH (typical,  int)   -- prof ... a  son      ... he
