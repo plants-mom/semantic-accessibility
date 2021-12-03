@@ -7,9 +7,11 @@ here::i_am("src/plots.R")
 library(here)
 library(knitr)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(cowplot)
 library(readr)
+library(fs)
 library(tidyr)
 library(purrr)
 library(ggtext)
@@ -18,11 +20,8 @@ library(ggtext)
 ## prior predictive check plots
 ##
 
-ppc_rt_plots <- function() {
-  source(here("src/priors.R"))
-  sim_summary <- read.csv(here("results/sim_summary_bin.csv"))
-
-
+ppc_rt_plots <- function(file_in, priors, save = FALSE) {
+  sim_summary <- read.csv(file_in)
 
   capt <- priors %>%
     select(class, prior) %>%
@@ -34,7 +33,7 @@ ppc_rt_plots <- function() {
     filter(stat != "ieff_rt") %>%
     ggplot(aes(rt)) +
     scale_x_continuous("Reaction times in ms",
-      trans = "log",
+      ## trans = "id",
       breaks = c(0.001, 1, 100, 1000, 10000, 10000000),
       labels = function(n) {
         format(n, scientific = 5, digits = 3)
@@ -68,7 +67,9 @@ ppc_rt_plots <- function() {
   pp_checks <- plot_grid(scsum_plot, inter)
   pp_checks
 
-  ggsave(here("figs/prior_pred_6.png"), pp_checks, width = 16, height = 8)
+  if (save == TRUE) {
+    ggsave(here("figs/prior_pred_6.png"), pp_checks, width = 16, height = 8)
+  }
 }
 
 ppc_params_plots <- function(simdata) {
@@ -88,9 +89,21 @@ ppc_params_plots <- function(simdata) {
   ## rethinking::dens(inter)
 }
 
-if (sys.nframe() == 0) {
-
-  ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv"))
+measure_by_cond <- function() {
+  read_csv(here("results/region6.csv")) %>%
+    select(gdur, tgdur, rpdur, cond) %>%
+    pivot_longer(!cond, names_to = "measure") %>%
+    mutate(cond = as.factor(cond), measure = as.factor(measure)) %>%
+    ggplot(aes(x = cond, y = value)) +
+    geom_boxplot() +
+    facet_wrap(~measure)
 }
 
 
+
+if (sys.nframe() == 0) {
+  source(here("src/priors.R"))
+
+  ## ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv"))
+  pp <- ppc_rt_plots(here("results/sim_summary_lognorm_2021-12-02.csv"), priors_ni_big_sd)
+}
