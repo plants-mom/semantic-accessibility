@@ -20,7 +20,9 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
                          "both", "none", "split_models",
                          "full_models"
                        ),
-                       optimize_mem = FALSE) {
+                       .family = NULL,
+                       optimize_mem = FALSE,
+                       unique_name = FALSE) {
   ##
   ## I leave optimize_mem so it lack won't bite me somewhere
   ##
@@ -32,8 +34,9 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
     (1 + typic * interf * quants | subj)) %>%
     update.formula(paste0(dv_name, "~ . "))
 
-  family_ <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
-
+  if (is.null(.family)) {
+    .family <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
+  }
 
   nms <- data_list %>%
     map(~ select(., region)) %>%
@@ -42,7 +45,6 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
 
   ## message(dv_name, typeof(dv_name))
   ## message(str(data_list))
-
 
   if (remove_zeros == TRUE) {
     sel_data <- map(
@@ -59,19 +61,28 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
   }
 
   ## return(sel_data)
+  ##
+  if (unique_name == TRUE) {
+    mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
+  } else {
+    mname <- paste(dv_name, "r", sep = "_")
+  }
 
   full_ms <- sel_data %>%
     map(~ brm(frm,
-      family = family_,
+      family = .family,
       prior = .priors,
       iter = 4000, data = .x,
-      file = here("models", paste0(dv_name, "_r", .x$region[1]))
+      file = here("models", paste0(mname, .x$region[1]))
     ))
 
 
   if (optimize_mem == TRUE || .return %in% c("none", "split_models")) {
     rm(full_ms)
     gc()
+  } else if (optimize_mem == TRUE && .return == "full_models") {
+    rm(full_ms)
+    return()
   } else if (.return == "full_models") {
     rm(sel_data, nms)
     return(list(full_models = full_ms))
@@ -86,7 +97,7 @@ fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
 
   split_ms <- map(sel_data, ~ split(., .$quan_cond)) %>%
     map(~ imap(., ~ brm(frm,
-      family = family_,
+      family = .family,
       prior = .priors,
       iter = 4000,
       data = .x,
@@ -126,21 +137,39 @@ if (sys.nframe() == 0) {
   dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
     map(~ read_csv(here("results", .)))
 
-  c("rrdur", "totfixdur") %>%
-    walk(~ fit_models(dfs, ., .priors = priors, optimize_mem = TRUE))
+  ## c("rrdur", "totfixdur") %>%
+  ##   walk(~ fit_models(dfs, ., .priors = priors, optimize_mem = TRUE))
 
-  map(dfs, ~ filter(., gbck != 0)) %>%
-    map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
-    fit_models(., "gbck",
-      .priors = priors_binom,
-      remove_zeros = FALSE, optimize_mem = TRUE
-    )
+  ## map(dfs, ~ filter(., gbck != 0)) %>%
+  ##   map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
+  ##   fit_models(., "gbck",
+  ##     .priors = priors_binom,
+  ##     remove_zeros = FALSE, optimize_mem = TRUE
+  ##   )
 
-  fit_models(dfs, "rr",
-    .priors = priors_binom,
-    remove_zeros = FALSE, optimize_mem = TRUE
-  )
+  ## fit_models(dfs, "rr",
+  ##   .priors = priors_binom,
+  ##   remove_zeros = FALSE, optimize_mem = TRUE
+  ## )
+
+  ## c("gdur", "tgdur", "rpdur") %>%
+  ##   walk(~ fit_models(dfs[6], .,
+  ##     .priors = priors_narrow_int,
+  ##     optimize_mem = TRUE, .return = "full_models", unique_name = TRUE
+  ##   ))
 
   c("gdur", "tgdur", "rpdur") %>%
-    walk(~ fit_models(dfs[6:8], ., .priors = priors, optimize_mem = TRUE))
+    walk(~ fit_models(dfs[6], .,
+      .priors = priors_gamma,
+      ## .family = "shifted_lognormal",
+      .family = "Gamma",
+      optimize_mem = TRUE, .return = "full_models", unique_name = TRUE
+    ))
+
+##   c("gdur", "tgdur", "rpdur") %>%
+##     walk(~ fit_models(dfs[6:8], .,
+##       .priors = priors_ni_big_sd_sigma,
+##       optimize_mem = TRUE, .return = "full_models", unique_name = TRUE
+##     ))
+
 }
