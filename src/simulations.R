@@ -13,11 +13,13 @@ library(designr)
 source(here("src/sim_functions.R"))
 
 ppc_lognorm <- function(.number_sim = number_sim,
-                       .simdata = simdata, write = TRUE) {
+                        .simdata = simdata,
+                        .priors = priors,
+                        write = TRUE) {
   frm <- "~ quants * typic * interf +
  (quants * typic * interf | subj) + (quants * typic * interf | item)"
   simd <- msimulate(
-    .number_sim, .simdata, priors, 8, 8, 8,
+    .number_sim, .simdata, .priors, 8, 8, 8,
     "gaussian", frm
   )
 
@@ -73,6 +75,7 @@ ppc_binom <- function(.number_sim = number_sim, .simdata = simdata) {
 }
 
 if (sys.nframe() == 0) {
+  source(here("src/priors.R"))
   set.seed(123)
 
   expdesign <- fixed.factor("quan_cond", levels = c("EEN", "GEEN")) +
@@ -99,5 +102,6 @@ if (sys.nframe() == 0) {
     )
 
 
-  ppc_binom(1e3)
+  ## ppc_binom(1e3)
+  ppc_lognorm(1000, .priors = priors_ni_big_sd)
 }
