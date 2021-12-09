@@ -94,11 +94,21 @@ measure_by_cond <- function() {
     select(gdur, tgdur, rpdur, cond) %>%
     pivot_longer(!cond, names_to = "measure") %>%
     mutate(cond = as.factor(cond), measure = as.factor(measure)) %>%
-    ggplot(aes(x = cond, y = value)) +
+    filter(value != 0) %>%
+    ggplot(aes(x = cond, y = log(value))) +
     geom_boxplot() +
     facet_wrap(~measure)
 }
 
+hist_r6 <- function(var) {
+  read_csv(here("results/region6.csv")) %>%
+    select({{var}}, cond) %>%
+    mutate(cond = as.factor(cond)) %>%
+    filter(.data[[var]] != 0) %>%
+    ggplot(aes(x = log(.data[[var]]))) +
+    geom_histogram(binwidth = 0.075) +
+    facet_wrap(~ cond)
+}
 
 
 if (sys.nframe() == 0) {
@@ -106,4 +116,6 @@ if (sys.nframe() == 0) {
 
   ## ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv"))
   pp <- ppc_rt_plots(here("results/sim_summary_lognorm_2021-12-02.csv"), priors_ni_big_sd)
+  measure_by_cond()
+  ggsave(here("figs/measure_by_cond.png"))
 }

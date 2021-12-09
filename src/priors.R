@@ -50,3 +50,15 @@ priors_gamma <- c(
   prior(normal(0, 1), class = sd),
   prior(lkj(2), class = cor)
 )
+
+priors_mix <- c(
+  prior(normal(5, 5), class = Intercept, dpar = mu1),
+  prior(normal(6, 4), class = Intercept, dpar = mu2),
+  prior(normal(0, 1), class = b, dpar = mu1),
+  prior(normal(0, 1), class = b, dpar = mu2),
+  prior(normal(0, 1), class = sigma1),
+  prior(normal(0, 1), class = sigma2),
+  prior(normal(0, 1), class = sd, dpar = mu1),
+  prior(normal(0, 1), class = sd, dpar = mu2)
+  ## prior(normal(0, 1), class = theta)
+)

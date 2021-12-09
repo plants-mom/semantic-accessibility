@@ -8,6 +8,7 @@ library(here)
 library(dplyr)
 library(tidyr)
 library(readr)
+library(extraDistr)
 library(designr)
 
 source(here("src/sim_functions.R"))
@@ -51,8 +52,10 @@ ppc_lognorm <- function(.number_sim = number_sim,
 
   if (write == TRUE) {
     write.csv(sim_summary,
-              here("results",
-                   paste0("sim_summary_lognorm_", Sys.Date(), ".csv")),
+      here(
+        "results",
+        paste0("sim_summary_lognorm_", Sys.Date(), ".csv")
+      ),
       row.names = FALSE
     )
   }
@@ -65,26 +68,28 @@ ppc_binom <- function(.number_sim = number_sim, .simdata = simdata) {
  (quants * typic * interf | subj) + (quants * typic * interf | item)"
   simd <- msimulate(
     .number_sim, .simdata, priors_binom, 8, 8, 8,
-    "binomial", frm, intercept_above_zero = FALSE, estimates = FALSE
+    "binomial", frm,
+    intercept_above_zero = FALSE, estimates = FALSE
   )
 
-  write_csv(simd$true_params,
-            here("results",
-                 paste0("ppc_params_sample_binom_", Sys.Date(), ".csv")))
+  write_csv(
+    simd$true_params,
+    here(
+      "results",
+      paste0("ppc_params_sample_binom_", Sys.Date(), ".csv")
+    )
+  )
   ## return(simd)
 }
 
-if (sys.nframe() == 0) {
-  source(here("src/priors.R"))
-  set.seed(123)
-
-  expdesign <- fixed.factor("quan_cond", levels = c("EEN", "GEEN")) +
-    fixed.factor("subj_cond", levels = c("MATCH", "MIS")) +
-    fixed.factor("obj_cond", levels = c("MATCH", "MIS")) +
-    random.factor("subj", instances = 48) +
-    random.factor("item", instances = 32)
-
-  simdata <- design.codes(expdesign) %>%
+simdataf <- function() {
+  design.codes(
+    fixed.factor("quan_cond", levels = c("EEN", "GEEN")) +
+      fixed.factor("subj_cond", levels = c("MATCH", "MIS")) +
+      fixed.factor("obj_cond", levels = c("MATCH", "MIS")) +
+      random.factor("subj", instances = 48) +
+      random.factor("item", instances = 32)
+  ) %>%
     mutate(
       cond = case_when(
         quan_cond == "EEN" & subj_cond == "MATCH" & obj_cond == "MATCH" ~ "a",
@@ -100,8 +105,35 @@ if (sys.nframe() == 0) {
       typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1),
       interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
     )
+}
 
+mixture <- function(alpha = 5.8, gamma = 5.2, .simdata = simdataf(),
+                    beta = 0.05, beta2 = 0.05, sigma1 = .4, sigma2 = .5) {
+  N <- nrow(.simdata)
+  ## Parameters true values
+  ## p_task <- .8
+  .simdata %>%
+    mutate(rt = if_else(
+             ## quan_cond == "EEN",
+             cond %in% c("a", "e"),
+             rlnorm(N,
+                    meanlog = gamma + typic * beta + interf * beta2,
+                    sdlog = sigma1),
+             rlnorm(N,
+                    meanlog = alpha + typic * beta + interf * beta2,
+                    sdlog = sigma2
+      )
+    ))
+}
 
+if (sys.nframe() == 0) {
+  library(ggplot2)
+  source(here("src/priors.R"))
+  set.seed(123)
   ## ppc_binom(1e3)
-  ppc_lognorm(1000, .priors = priors_ni_big_sd)
+  ## ppc_lognorm(1000, .priors = priors_ni_big_sd, .simdata = simdataf())
+
+  mixture(alpha = 5.3, gamma = 5.97, sigma1 = 0.2) %>%
+    ggplot(aes(rt)) +
+    geom_density()
 }
