@@ -10,27 +10,21 @@ library(dplyr)
 library(readr)
 library(here)
 
-collectedDF <- read_delim(here("data/allACTFiles_vp.csv"), delim = " ")
+dataf <- read_delim(here("data/allACTFiles_vp.csv"), delim = " ") %>%
+  mutate(item = as.numeric(item),
+         subjectnr = as.numeric(subjectnr))
 
-collectedDF$item <- as.factor(collectedDF$item)
+glimpse(dataf)
+all(sort(unique(dataf$item)) == seq(32))
+length(unique(dataf$subjectnr))
 
-collectedDF <- subset(collectedDF, item != 014 & item != 024 & subjectnr != 004, drop = TRUE)
-
-collectedDF$item <- as.factor(as.numeric(collectedDF$item))
-
-collectedDF <- subset(collectedDF, !(subjectnr == 004 & (item == 3 | item == 4 | item == 6 | item == 7)))
-collectedDF <- subset(collectedDF, !(subjectnr == 038 & item == 14))
-collectedDF <- subset(collectedDF, !(subjectnr == 040 & item == 19))
-collectedDF <- subset(collectedDF, !(subjectnr == 013 & item == 25))
-collectedDF <- subset(collectedDF, !(subjectnr == 043 & (item == 3 | item == 6 | item == 7)))
-collectedDF <- subset(collectedDF, !(subjectnr == 020 & item == 30))
-
-collectedDF %>%
-  filter(subjectnr == 043, item == 3)
-
-collectedDF$cond <- as.character(collectedDF$cond)
-
-collectedDF <- collectedDF %>%
+out <- dataf %>%
+  filter(!(item %in% c(14, 24)),
+         subjectnr != 4,
+         !(subjectnr == 40 & item == 19),
+         !(subjectnr == 13 & item == 25),
+         !(subjectnr == 43 & (item == 3 | item == 6 | item == 7)),
+         !(subjectnr == 20 & item == 30)) %>%
   group_by(cond) %>%
   mutate(
     quan = strsplit(cond[1], "_")[[1]][1],
@@ -40,7 +34,11 @@ collectedDF <- collectedDF %>%
   ungroup()
 
 
-collectedDF %>%
+out %>%
+  filter(subjectnr == 43, item %in% c(3, 6, 7, 14, 24))
+
+
+out %>%
   select(-cond, -expname) %>%
   rename(
     subj = subjectnr, subj_cond = subj, obj_cond = obj,
