@@ -20,13 +20,13 @@ data {
 
 parameters {
   real alpha;
-  real beta_quant;               //means for quantifier
-  real beta_typic;               //means for typicality
-  real beta_interf;              //means for interference
-  real beta_interf_quant;        //means for interference
-  real beta_interf_typic;        //means for interference
-  real beta_quant_typic;         //means for interference
-  real beta_interf_quant_typic;  //means for interference
+  real b_quant;               //means for quantifier
+  real b_typic;               //means for typicality
+  real b_interf;              //means for interference
+  real b_interf_quant;        //means for interference
+  real b_interf_typic;        //means for interference
+  real b_quant_typic;         //means for interference
+  real b_interf_quant_typic;  //means for interference
   real<lower=0> sigma_e;         //error sd
   real<lower=0> sigma_e_shift;   //error sd for the shifted component
   real<lower=0,upper=1> prob;    //probability of extreme values
@@ -52,13 +52,13 @@ model {
   //priors
 
   target += normal_lpdf(alpha | 5, 5);
-  target += normal_lpdf(beta_quant | 0, 1);
-  target += normal_lpdf(beta_typic | 0, 1);
-  target += normal_lpdf(beta_interf | 0, 1);
-  target += normal_lpdf(beta_interf_quant | 0, 1);
-  target += normal_lpdf(beta_interf_typic | 0, 1);
-  target += normal_lpdf(beta_quant_typic | 0, 1);
-  target += normal_lpdf(beta_interf_quant_typic | 0, 1);
+  target += normal_lpdf(b_quant | 0, 1);
+  target += normal_lpdf(b_typic | 0, 1);
+  target += normal_lpdf(b_interf | 0, 1);
+  target += normal_lpdf(b_interf_quant | 0, 1);
+  target += normal_lpdf(b_interf_typic | 0, 1);
+  target += normal_lpdf(b_quant_typic | 0, 1);
+  target += normal_lpdf(b_interf_quant_typic | 0, 1);
   target += beta_lpdf(prob | 10, 2);
   target += normal_lpdf(delta | 2, 1);
   target += normal_lpdf(sigma_e | 0, 1) -
@@ -76,14 +76,14 @@ model {
 
   // likelihood
   for (i in 1:N){
-    real mu = alpha + u[subj[i], 1] + w[item[i], 1] +
-      typic[i] * (beta_typic + u[subj[i], 2]) +
-      interf[i] * (beta_interf + u[subj[i], 2]) +
-      quant[i] * (beta_quant + u[subj[i], 2])  +
-      quant[i] * interf[i] * (beta_interf_quant + u[subj[i], 2]) +
-      quant[i] * typic[i] * (beta_interf_typic + u[subj[i], 2]) +
-      quant[i] * typic[i] * (beta_quant_typic + u[subj[i], 2]) +
-      quant[i] * typic[i] * interf[i] * (beta_interf_quant_typic + u[subj[i], 2]);
+    real mu = alpha +  u[subj[i], 1] + w[item[i], 1] +
+      typic[i] * (b_typic + u[subj[i], 2] + w[item[i], 2]) +
+      interf[i] * (b_interf + u[subj[i], 2] + w[item[i], 2]) +
+      quant[i] * (b_quant + u[subj[i], 2] + w[item[i], 2])  +
+      interf[i] * quant[i] * (b_interf_quant + u[subj[i], 2] + w[item[i], 2]) +
+      interf[i] * typic[i] * (b_interf_typic + u[subj[i], 2] + w[item[i], 2]) +
+      quant[i] * typic[i] * (b_quant_typic + u[subj[i], 2] + w[item[i], 2]) +
+      interf[i] * quant[i] * typic[i] * (b_interf_quant_typic + u[subj[i], 2] + w[item[i], 2]);
 
       target += log_sum_exp(log(prob) +
                             lognormal_lpdf(rt[i] | mu + delta, sigma_e_shift),
@@ -97,14 +97,14 @@ generated quantities{
   real<lower=0,upper=1> test;  //probability of mixtures
 
   for (i in 1:N){
-    real pred_mu = alpha + u[subj[i], 1] + w[item[i], 1] +
-      typic[i] * (beta_typic + u[subj[i], 2]) +
-      interf[i] * (beta_interf + u[subj[i], 2]) +
-      quant[i] * (beta_quant + u[subj[i], 2])  +
-      quant[i] * interf[i] * (beta_interf_quant + u[subj[i], 2]) +
-      quant[i] * typic[i] * (beta_interf_typic + u[subj[i], 2]) +
-      quant[i] * typic[i] * (beta_quant_typic + u[subj[i], 2]) +
-      quant[i] * typic[i] * interf[i] * (beta_interf_quant_typic + u[subj[i], 2]);
+    real pred_mu = alpha +  u[subj[i], 1] + w[item[i], 1] +
+      typic[i] * (b_typic + u[subj[i], 2] + w[item[i], 2]) +
+      interf[i] * (b_interf + u[subj[i], 2] + w[item[i], 2]) +
+      quant[i] * (b_quant + u[subj[i], 2] + w[item[i], 2])  +
+      interf[i] * quant[i] * (b_interf_quant + u[subj[i], 2] + w[item[i], 2]) +
+      interf[i] * typic[i] * (b_interf_typic + u[subj[i], 2] + w[item[i], 2]) +
+      quant[i] * typic[i] * (b_quant_typic + u[subj[i], 2] + w[item[i], 2]) +
+      interf[i] * quant[i] * typic[i] * (b_interf_quant_typic + u[subj[i], 2] + w[item[i], 2]);
 
     test = uniform_rng(0, 1); // draw from uniform(0, 1)
 
