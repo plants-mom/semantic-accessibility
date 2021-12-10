@@ -28,8 +28,6 @@ parameters {
   real beta_interf_quant_typic;  //means for interference
   real<lower=0> sigma_e;         //error sd
   real<lower=0> sigma_e_shift;   //error sd for the shifted component
-  real<lower=0> sigma_u;         //subj sd
-  real<lower=0> sigma_w;         //item sd
   real<lower=0,upper=1> prob;    //probability of extreme values
   real<lower=0> delta;
 
@@ -74,23 +72,17 @@ model {
   target += lkj_corr_cholesky_lpdf(L_w | 2);
   target += std_normal_lpdf(to_vector(z_u));
   target += std_normal_lpdf(to_vector(z_w));
-  // target += normal_lpdf(sigma_u | 0, 1) -
-  //   normal_lccdf(0 | 0, 1);
-  // target += normal_lpdf(sigma_w | 0, 1) -
-  //   normal_lccdf(0 | 0, 1);
-  // target += normal_lpdf(u | 0, sigma_u);          //subj random effects
-  // target += normal_lpdf(w | 0, sigma_w);          //subj random effects
 
   // likelihood
   for (i in 1:N){
-    real mu = alpha +  u[subj[i], 1] + w[item[i], 1] +
-      typic[i] * (beta_typic + u[subj[i], 2] + w[item[i], 2]) +
-      interf[i] * (beta_interf + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * (beta_quant + u[subj[i], 2] + w[item[i], 2])  +
-      quant[i] * interf[i] * (beta_interf_quant + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * typic[i] * (beta_interf_typic + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * typic[i] * (beta_quant_typic + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * typic[i] * interf[i] * (beta_interf_quant_typic + u[subj[i], 2] + w[item[i], 2]);
+    real mu = alpha + u[subj[i], 1] + w[item[i], 1] +
+      typic[i] * (beta_typic + u[subj[i], 2]) +
+      interf[i] * (beta_interf + u[subj[i], 2]) +
+      quant[i] * (beta_quant + u[subj[i], 2])  +
+      quant[i] * interf[i] * (beta_interf_quant + u[subj[i], 2]) +
+      quant[i] * typic[i] * (beta_interf_typic + u[subj[i], 2]) +
+      quant[i] * typic[i] * (beta_quant_typic + u[subj[i], 2]) +
+      quant[i] * typic[i] * interf[i] * (beta_interf_quant_typic + u[subj[i], 2]);
 
       target += log_sum_exp(log(prob) +
                             lognormal_lpdf(rt[i] | mu + delta, sigma_e_shift),
@@ -104,14 +96,14 @@ generated quantities{
   real<lower=0,upper=1> test;  //probability of mixtures
 
   for (i in 1:N){
-    real pred_mu = alpha +  u[subj[i], 1] + w[item[i], 1] +
-      typic[i] * (beta_typic + u[subj[i], 2] + w[item[i], 2]) +
-      interf[i] * (beta_interf + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * (beta_quant + u[subj[i], 2] + w[item[i], 2])  +
-      quant[i] * interf[i] * (beta_interf_quant + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * typic[i] * (beta_interf_typic + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * typic[i] * (beta_quant_typic + u[subj[i], 2] + w[item[i], 2]) +
-      quant[i] * typic[i] * interf[i] * (beta_interf_quant_typic + u[subj[i], 2] + w[item[i], 2]);
+    real mu = alpha + u[subj[i], 1] + w[item[i], 1] +
+      typic[i] * (beta_typic + u[subj[i], 2]) +
+      interf[i] * (beta_interf + u[subj[i], 2]) +
+      quant[i] * (beta_quant + u[subj[i], 2])  +
+      quant[i] * interf[i] * (beta_interf_quant + u[subj[i], 2]) +
+      quant[i] * typic[i] * (beta_interf_typic + u[subj[i], 2]) +
+      quant[i] * typic[i] * (beta_quant_typic + u[subj[i], 2]) +
+      quant[i] * typic[i] * interf[i] * (beta_interf_quant_typic + u[subj[i], 2]);
 
     test = uniform_rng(0, 1); // draw from uniform(0, 1)
 
