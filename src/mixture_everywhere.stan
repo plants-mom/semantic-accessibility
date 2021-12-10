@@ -96,7 +96,7 @@ generated quantities{
   real<lower=0,upper=1> test;  //probability of mixtures
 
   for (i in 1:N){
-    real mu = alpha + u[subj[i], 1] + w[item[i], 1] +
+    real pred_mu = alpha + u[subj[i], 1] + w[item[i], 1] +
       typic[i] * (beta_typic + u[subj[i], 2]) +
       interf[i] * (beta_interf + u[subj[i], 2]) +
       quant[i] * (beta_quant + u[subj[i], 2])  +
