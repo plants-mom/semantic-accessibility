@@ -5,12 +5,13 @@ Model which assumes mixture distribution over all the conditions.
 */
 
 data {
-  int<lower=1> N;                 //number of data points
-  real rt[N];                     //reading time
+  int<lower=1> N;                      //number of data points
+  real rt[N];                          //reading time
   int<lower=1> N_subj;                 //number of subjects
   int<lower=1> N_item;                 //number of items
-  int<lower=1, upper=N_subj> subj[N];           //subject id
+  int<lower=1, upper=N_subj> subj[N];  //subject id
   int<lower=1, upper=N_item> item[N];  //item id
+
   // predictor values
   vector[N] quant;
   vector[N] typic;
@@ -64,10 +65,10 @@ model {
     normal_lccdf(0 | 0, 2);
   target += normal_lpdf(sigma_e_shift | 0, 1) -
     normal_lccdf(0 | 0, 2);
-  target += normal_lpdf(tau_u | 0, 20) -
-    2 * normal_lccdf(0 | 0, 20);
- target += normal_lpdf(tau_w | 0, 20) -
-    2* normal_lccdf(0 | 0, 20);
+  target += normal_lpdf(tau_u | 0, 1) -
+    2 * normal_lccdf(0 | 0, 1);
+ target += normal_lpdf(tau_w | 0, 1) -
+    2* normal_lccdf(0 | 0, 1);
   target += lkj_corr_cholesky_lpdf(L_u | 2);
   target += lkj_corr_cholesky_lpdf(L_w | 2);
   target += std_normal_lpdf(to_vector(z_u));
