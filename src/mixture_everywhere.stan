@@ -29,7 +29,7 @@ parameters {
   vector[J] u;                   //subject intercepts
   vector[K] w;                   //item intercepts
   real<lower=0> sigma_e;         //error sd
-  real<lower=0> sigma_e2;        //error sd
+  real<lower=0> sigma_e_shift;   //error sd for the shifted component
   real<lower=0> sigma_u;         //subj sd
   real<lower=0> sigma_w;         //item sd
   real<lower=0,upper=1> prob;    //probability of extreme values
@@ -52,14 +52,14 @@ model {
   target += normal_lpdf(delta | 2, 1);
   target += normal_lpdf(sigma_e | 0, 1) -
     normal_lccdf(0 | 0, 2);
-  target += normal_lpdf(sigma_e2 | 0, 1) -
+  target += normal_lpdf(sigma_e_shift | 0, 1) -
     normal_lccdf(0 | 0, 2);
   target += normal_lpdf(sigma_u | 0, 1) -
     normal_lccdf(0 | 0, 1);
   target += normal_lpdf(sigma_w | 0, 1) -
     normal_lccdf(0 | 0, 1);
   target += normal_lpdf(u | 0, sigma_u);          //subj random effects
-  target += normal_lpdf(w | 0, sigma_u);          //subj random effects
+  target += normal_lpdf(w | 0, sigma_w);          //subj random effects
 
   // likelihood
   for (i in 1:N){
@@ -74,9 +74,9 @@ model {
       u[subj[i]] + w[item[i]];
 
       target += log_sum_exp(log(prob) +
-                            lognormal_lpdf(rt[i] | mu + delta, sigma_e),
+                            lognormal_lpdf(rt[i] | mu + delta, sigma_e_shift),
                             log1m(prob) +
-                            lognormal_lpdf(rt[i] | mu, sigma_e2));
+                            lognormal_lpdf(rt[i] | mu, sigma_e));
   }
 }
 
@@ -99,9 +99,9 @@ generated quantities{
 
     // draw below prob: sample from the moved model
     if (test < prob) {
-      yrep[i] = lognormal_rng(pred_mu + delta, sigma_e);
+      yrep[i] = lognormal_rng(pred_mu + delta, sigma_e_shift);
 
     // draw above prob: sample from the simple model
-    } else yrep[i] = lognormal_rng(pred_mu, sigma_e2);
+    } else yrep[i] = lognormal_rng(pred_mu, sigma_e);
   }
 }
