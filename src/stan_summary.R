@@ -16,7 +16,7 @@ y <- read_csv(here("results/region6.csv")) %>%
   pull(tgdur)
 
 
-fit <- readRDS(here("models/mixture_int_typ.rds"))
+fit <- readRDS(here("models/mixture_everywhere.rds"))
 yrep <- extract(fit, pars = "yrep")$yrep
 
 
@@ -28,15 +28,14 @@ ppc_dens_overlay(y, yrep[1:200,])
 ppc_stat_2d(y, yrep, stat = c("median", "sd"))
 ppc_stat_2d(y, yrep, stat = c("mean", "sd"))
 ppc_stat(y, yrep, stat = "median")
+ppc_stat(y, yrep, stat = "sd")
 ppc_stat_2d(y, yrep, stat = c("min", "max"))
 
 summary(fit, pars = c("alpha", "beta_typic", "delta", "prob", "sigma_e", "sigma_e2"))$summary
 
 plot(function(x) dbeta(x, 2, 10))
 
-ggsave(here("figs/ppc_tgdur_stat2_stan.png"))
+if (sys.nframe() == 0) {
 
-traceplot(fit, pars = c("alpha", "beta_typic"), nrow = 2)
-str(fit)
-
-methods(class = "stanfit")
+  ggsave(here("figs/ppc_tgdur_stat2_stan.png"))
+}

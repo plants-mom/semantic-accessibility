@@ -22,19 +22,19 @@ tgdur <- r6 %>%
   select(subj, item, tgdur, quan_cond:last_col())
 
 tgdur_data <- with(tgdur, list(
-  rt = tgdur, J = max(subj), K = max(item),
+  rt = tgdur, N_subj = max(subj), N_item = max(item),
   subj = subj, item = item, quant = quants,
   typic = typic, interf = interf
 ))
 
 tgdur_data$N <- nrow(tgdur)
 
-model <- "mixture_int_typ"
+model <- "mixture_everywhere"
 
 fit <- stan(
   file = here("src", paste0(model, ".stan")),
   data = tgdur_data,
-  control = list(adapt_delta = 0.99),
-  iter = 4000
+  control = list(adapt_delta = 0.99, max_treedepth = 15),
+  iter = 8000,
 )
-saveRDS(fit, here("models", paste0(model, ".rds")))
+saveRDS(fit, here("models", paste0(model, "_small_tau", ".rds")))
