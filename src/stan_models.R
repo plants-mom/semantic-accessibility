@@ -13,28 +13,26 @@ options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 
 
-r6 <- read_csv(here("results/region6.csv"))
+prepare_data <- function(var, region) {
+  region %>%
+    filter(.data[[var]] != 0) %>%
+    select(subj, item, {{ var }}, quan_cond:last_col()) %>%
+    with(., list(
+              rt = .[[var]], N_subj = max(subj), N_item = max(item),
+              subj = subj, item = item, quant = quants,
+              typic = typic, interf = interf
+            ))
+}
 
+if (sys.nframe() == 0) {
 
-tgdur <- r6 %>%
-  filter(tgdur != 0) %>%
-  mutate(cond = map_dbl(cond, ~ which(letters == .))) %>%
-  select(subj, item, tgdur, quan_cond:last_col())
+  r6 <- read_csv(here("results/region6.csv"))
 
-tgdur_data <- with(tgdur, list(
-  rt = tgdur, N_subj = max(subj), N_item = max(item),
-  subj = subj, item = item, quant = quants,
-  typic = typic, interf = interf
-))
-
-tgdur_data$N <- nrow(tgdur)
-
-model <- "mixture_everywhere"
-
-fit <- stan(
-  file = here("src", paste0(model, ".stan")),
-  data = tgdur_data,
-  control = list(adapt_delta = 0.99, max_treedepth = 15),
-  iter = 8000,
-)
-saveRDS(fit, here("models", paste0(model, "_small_tau", ".rds")))
+  c(tgdur = "tgdur", rpdur = "rpdur", gdur = "gdur") %>%
+    map(~ prepare_data(., r6)) %>%
+    map(~ stan(file = here("src/mixture_everywhere.stan"),
+               data = .,
+               control = list(adapt_delta = 0.99, max_treedepth = 15),
+               iter = 4000)) %>%
+    imap(~ saveRDS(.x, here("models", paste0(.y, "_stan_r6", ".rds"))))
+}
