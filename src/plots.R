@@ -21,8 +21,11 @@ library(ggtext)
 ##
 
 ppc_rt_plots <- function(file_in, priors, save = FALSE) {
-  sim_summary <- read.csv(file_in)
 
+  ## The priors here do not determine the priors used for the simulations,
+  ## only the caption.
+
+  sim_summary <- read.csv(file_in)
   capt <- priors %>%
     select(class, prior) %>%
     kable(format = "simple")
@@ -33,7 +36,7 @@ ppc_rt_plots <- function(file_in, priors, save = FALSE) {
     filter(stat != "ieff_rt") %>%
     ggplot(aes(rt)) +
     scale_x_continuous("Reaction times in ms",
-      ## trans = "id",
+      trans = "log",
       breaks = c(0.001, 1, 100, 1000, 10000, 10000000),
       labels = function(n) {
         format(n, scientific = 5, digits = 3)
@@ -65,10 +68,12 @@ ppc_rt_plots <- function(file_in, priors, save = FALSE) {
     geom_histogram(bins = 100)
 
   pp_checks <- plot_grid(scsum_plot, inter)
-  pp_checks
 
   if (save == TRUE) {
     ggsave(here("figs/prior_pred_6.png"), pp_checks, width = 16, height = 8)
+    return(pp_checks)
+  } else {
+    return(pp_checks)
   }
 }
 
@@ -102,12 +107,12 @@ measure_by_cond <- function() {
 
 hist_r6 <- function(var) {
   read_csv(here("results/region6.csv")) %>%
-    select({{var}}, cond) %>%
+    select({{ var }}, cond) %>%
     mutate(cond = as.factor(cond)) %>%
     filter(.data[[var]] != 0) %>%
     ggplot(aes(x = log(.data[[var]]))) +
     geom_histogram(binwidth = 0.075) +
-    facet_wrap(~ cond)
+    facet_wrap(~cond)
 }
 
 
@@ -115,7 +120,7 @@ if (sys.nframe() == 0) {
   source(here("src/priors.R"))
 
   ## ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv"))
-  pp <- ppc_rt_plots(here("results/sim_summary_lognorm_2021-12-02.csv"), priors_ni_big_sd)
+  pp <- ppc_rt_plots(here("results/sim_summary.csv"), priors)
   measure_by_cond()
   ggsave(here("figs/measure_by_cond.png"))
 }

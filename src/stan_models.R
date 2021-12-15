@@ -29,7 +29,7 @@ prepare_data <- function(var, region) {
 if (sys.nframe() == 0) {
   r6 <- read_csv(here("results/region6.csv"))
 
-  c(tgdur = "tgdur", rpdur = "rpdur", gdur = "gdur") %>%
+  c(tgdur = "tgdur", gdur = "gdur") %>%
     map(~ prepare_data(., r6)) %>%
     map(~ stan(
       file = here("src/mixture_everywhere.stan"),
@@ -37,5 +37,5 @@ if (sys.nframe() == 0) {
       control = list(adapt_delta = 0.99, max_treedepth = 15),
       iter = 4000
     )) %>%
-    imap(~ saveRDS(.x, here("models", paste0(.y, "_stan_r6", ".rds"))))
+    iwalk(~ saveRDS(.x, here("models", paste0(.y, "_stan_r6", ".rds"))))
 }

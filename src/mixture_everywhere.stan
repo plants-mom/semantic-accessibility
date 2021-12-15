@@ -51,7 +51,7 @@ model {
 
   //priors
 
-  target += normal_lpdf(alpha | 5, 5);
+  target += normal_lpdf(alpha | 0, 10);
   target += normal_lpdf(b_quant | 0, 1);
   target += normal_lpdf(b_typic | 0, 1);
   target += normal_lpdf(b_interf | 0, 1);
@@ -62,9 +62,9 @@ model {
   target += beta_lpdf(prob | 10, 2);
   target += normal_lpdf(delta | 2, 1);
   target += normal_lpdf(sigma_e | 0, 1) -
-    normal_lccdf(0 | 0, 2);
+    normal_lccdf(0 | 0, 1);
   target += normal_lpdf(sigma_e_shift | 0, 1) -
-    normal_lccdf(0 | 0, 2);
+    normal_lccdf(0 | 0, 1);
   target += normal_lpdf(tau_u | 0, 1) -
     2 * normal_lccdf(0 | 0, 1);
  target += normal_lpdf(tau_w | 0, 1) -
