@@ -1,6 +1,5 @@
 ##
 ## bayesian models
-## NB: this might sometimes crash, just run it one more time
 ##
 
 here::i_am("src/models.R")
@@ -32,25 +31,8 @@ fit_full <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
     map_dfr(unique) %>%
     pull()
 
-  ## message(dv_name, typeof(dv_name))
-  ## message(str(data_list))
+  sel_data <- rem_zeros(data_list, dv_name, remove_zeros)
 
-  if (remove_zeros == TRUE) {
-    sel_data <- map(
-      data_list,
-      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-    ) %>%
-      map(.x = ., ~ filter(., .data[[dv_name]] > 0)) %>%
-      set_names(paste0("region_", nms))
-  } else {
-    sel_data <- map(
-      data_list,
-      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-    ) %>% set_names(paste0("region_", nms))
-  }
-
-  ## return(sel_data)
-  ##
   if (unique_name == TRUE) {
     mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
   } else {
@@ -75,68 +57,106 @@ fit_full <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
   }
 }
 
-
-fit_split <- function(data_list, dv_name, split_by, .priors = priors,
-                      remove_zeros = TRUE, .family = NULL, optimize_mem = FALSE,
-                      unique_name = FALSE,
-                      ) {
-
-  frm <- formula(~ 1 + typic * interf +
-    (1 + typic * interf | item) +
-    (1 + typic * interf | subj)) %>%
-    update.formula(paste0(dv_name, "~ . "))
-
-  if (is.null(.family)) {
-    .family <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
-  }
-
+rem_zeros <- function(data_list, dv_name, remove_zeros) {
   nms <- data_list %>%
     map(~ select(., region)) %>%
     map_dfr(unique) %>%
     pull()
 
-  ## message(dv_name, typeof(dv_name))
-  ## message(str(data_list))
-
   if (remove_zeros == TRUE) {
-    sel_data <- map(
+    map(
       data_list,
-      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
+      ~ select(., region:item, quan_cond:last_col(), all_of(dv_name))
     ) %>%
       map(.x = ., ~ filter(., .data[[dv_name]] > 0)) %>%
       set_names(paste0("region_", nms))
   } else {
-    sel_data <- map(
+    map(
       data_list,
-      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
+      ~ select(., region:item, quan_cond:last_col(), all_of(dv_name))
     ) %>% set_names(paste0("region_", nms))
   }
+}
 
-  ## return(sel_data)
+
+fit_split <- function(data_list, dv_name, split_by = c("quant", "quant_typic"),
+                      .priors = priors,
+                      remove_zeros = TRUE, .family = NULL, optimize_mem = FALSE,
+                      unique_name = FALSE) {
+
   ##
+  ## this is just for two cases: either splitting by quantifier
+  ## or splitting by typicality and quantifier
+  ## would look much better if made more general
+  ##
+
+  if (is.null(.family)) {
+    .family <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
+  }
+
   if (unique_name == TRUE) {
     mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
   } else {
     mname <- paste(dv_name, "r", sep = "_")
   }
 
+  sel_data <- rem_zeros(data_list, dv_name, remove_zeros)
 
-  sel_data <- map(sel_data, ~ select(., -quants))
+  split <- match.arg(split_by)
 
-  split_ms <- map(sel_data, ~ split(., .$quan_cond)) %>%
-    map(~ imap(., ~ brm(frm,
-      family = .family,
-      prior = .priors,
-      iter = 4000,
-      data = .x,
-      file = here(
-        "models",
-        paste0(
-          dv_name, "_",
-          tolower(.y), "_r", .x$region[1]
+  if (split == "quant") {
+    frm <- formula(~ 1 + typic * interf +
+      (1 + typic * interf | item) +
+      (1 + typic * interf | subj)) %>%
+      update.formula(paste0(dv_name, "~ . "))
+
+    split_ms <- sel_data %>%
+      map(~ select(., -quants)) %>%
+      map(~ split(., .$quan_cond)) %>%
+      map(~ imap(., ~ brm(frm,
+        family = .family,
+        prior = .priors,
+        iter = 4000,
+        data = .x,
+        file = here(
+          "models",
+          paste0(
+            dv_name, "_",
+            tolower(.y), "_r", .x$region[1]
+          )
         )
-      )
-    )))
+      )))
+  }
+
+  if (split == "quant_typic") {
+    frm <- formula(~ 1 + interf +
+      (1 + interf | item) +
+      (1 + interf | subj)) %>%
+      update.formula(paste0(dv_name, "~ . "))
+
+    ## message(dv_name, typeof(dv_name))
+    ## message(str(data_list))
+
+    split_ms <- sel_data %>%
+      map(~ select(., -quants, -typic)) %>%
+      map(~ split(., list(.$quan_cond, .$typic_cond), sep = "_")) %>%
+      map(~ imap(., ~ brm(frm,
+        family = .family,
+        prior = .priors,
+        iter = 4000,
+        data = .x,
+        file = here(
+          "models",
+          paste0(
+            dv_name, "_",
+            tolower(.y), "_r", .x$region[1]
+          )
+        )
+      )))
+  } else {
+    message("not implemented")
+    return()
+  }
 
   if (optimize_mem == TRUE) {
     rm(split_ms, sel_data, frm)
@@ -146,111 +166,6 @@ fit_split <- function(data_list, dv_name, split_by, .priors = priors,
   }
 }
 
-
-fit_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
-                       .return = c(
-                         "both", "none", "split_models",
-                         "full_models"
-                       ),
-                       .family = NULL,
-                       optimize_mem = FALSE,
-                       unique_name = FALSE) {
-  ##
-  ## I leave optimize_mem so it lack won't bite me somewhere
-  ##
-
-  .return <- match.arg(.return)
-
-  frm <- formula(~ 1 + typic * interf * quants +
-    (1 + typic * interf * quants | item) +
-    (1 + typic * interf * quants | subj)) %>%
-    update.formula(paste0(dv_name, "~ . "))
-
-  if (is.null(.family)) {
-    .family <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
-  }
-
-  nms <- data_list %>%
-    map(~ select(., region)) %>%
-    map_dfr(unique) %>%
-    pull()
-
-  ## message(dv_name, typeof(dv_name))
-  ## message(str(data_list))
-
-  if (remove_zeros == TRUE) {
-    sel_data <- map(
-      data_list,
-      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-    ) %>%
-      map(.x = ., ~ filter(., .data[[dv_name]] > 0)) %>%
-      set_names(paste0("region_", nms))
-  } else {
-    sel_data <- map(
-      data_list,
-      ~ select(., region:item, quan_cond:last_col(), {{ dv_name }})
-    ) %>% set_names(paste0("region_", nms))
-  }
-
-  ## return(sel_data)
-  ##
-  if (unique_name == TRUE) {
-    mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
-  } else {
-    mname <- paste(dv_name, "r", sep = "_")
-  }
-
-  full_ms <- sel_data %>%
-    map(~ brm(frm,
-      family = .family,
-      prior = .priors,
-      iter = 4000, data = .x,
-      file = here("models", paste0(mname, .x$region[1]))
-    ))
-
-
-  if (optimize_mem == TRUE || .return %in% c("none", "split_models")) {
-    rm(full_ms)
-    gc()
-  } else if (optimize_mem == TRUE && .return == "full_models") {
-    rm(full_ms)
-    return()
-  } else if (.return == "full_models") {
-    rm(sel_data, nms)
-    return(list(full_models = full_ms))
-  }
-
-  frm <- formula(~ 1 + typic * interf +
-    (1 + typic * interf | item) +
-    (1 + typic * interf | subj)) %>%
-    update.formula(paste0(dv_name, "~ . "))
-
-  sel_data <- map(sel_data, ~ select(., -quants))
-
-  split_ms <- map(sel_data, ~ split(., .$quan_cond)) %>%
-    map(~ imap(., ~ brm(frm,
-      family = .family,
-      prior = .priors,
-      iter = 4000,
-      data = .x,
-      file = here(
-        "models",
-        paste0(
-          dv_name, "_",
-          tolower(.y), "_r", .x$region[1]
-        )
-      )
-    )))
-
-  if (optimize_mem == TRUE || .return == "none") {
-    rm(split_ms, sel_data, frm)
-    gc()
-  } else if (.return == "split_models") {
-    return(list(split_models = split_ms))
-  } else if (.return == "both") {
-    return(list(full_models = full_ms, split_models = split_ms))
-  }
-}
 
 get_model <- function(dv_name, region, type = "full_models") {
   list.files(here("results"), pattern = "region[0-9].csv") %>%
@@ -279,45 +194,9 @@ if (sys.nframe() == 0) {
   ##     remove_zeros = FALSE, optimize_mem = TRUE
   ##   )
 
-  ## fit_models(dfs, "rr",
-  ##   .priors = priors_binom,
-  ##   remove_zeros = FALSE, optimize_mem = TRUE
-  ## )
-
-  c("gdur", "tgdur", "rpdur") %>%
-
-gd <- "gbck" %>%
-    map(~ fit_full(dfs[5:6], .,
+  "gdur" %>%
+    walk(~ fit_split(dfs[6], .,
+      split_by = "quant_typic",
       .priors = priors
     ))
-
-glimpse(gd)
-
-
-  c("gdur", "tgdur", "rpdur") %>%
-    walk(~ fit_models(dfs[6], .,
-      .priors = priors_gamma,
-      ## .family = "shifted_lognormal",
-      .family = "Gamma",
-      optimize_mem = TRUE, .return = "full_models", unique_name = TRUE
-    ))
-
-  ##   c("gdur", "tgdur", "rpdur") %>%
-  ##     walk(~ fit_models(dfs[6:8], .,
-  ##       .priors = priors_ni_big_sd_sigma,
-  ##       optimize_mem = TRUE, .return = "full_models", unique_name = TRUE
-  ##     ))
 }
-
-frm <- formula(~ 1 + typic * interf +
-  (1 + typic * interf | item) +
-    (1 + typic * interf | subj))
-
-
-
-update.formula(frm, . ~ . - interf)
-frm
-
-
-%>%
-  update.formula(paste0(dv_name, "~ . "))
