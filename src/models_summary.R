@@ -13,10 +13,14 @@ library(readr)
 
 
 msummary <- function(data_list, id = "region") {
-  map(data_list, ~ posterior_summary(., pars = "b_")) %>%
-    map(~ rownames_to_column(as.data.frame(.))) %>%
+  map(data_list, ps_rename) %>%
     bind_rows(.id = id)
 }
+
+ps_rename <- compose(
+  ~ relabel_summary(.),
+  ~ posterior_summary(., pars = "b_")
+)
 
 make_plot <- compose(
   ~ mcmc_intervals(.x, prob = 0.95, prob_outer = 1),
@@ -33,6 +37,39 @@ post_plots <- function(var_name, data_list,
     modify_at(
       "split_models",
       ~ map(.x, ~ map(.x, ~ make_plot_func(.x)))
+    )
+}
+
+relabel_samples <- function(labelled_smpls) {
+  labelled_smpls %>%
+    ## select(starts_with("b")) %>%
+    rename(
+      "subj" = "b_typic",
+      "obj" = "b_interf",
+      "quant" = "b_quants",
+      "subj x obj" = "b_typic:interf",
+      "subj x quants" = "b_typic:quants",
+      "obj x quants" = "b_interf:quants",
+      "subj x obj x quants" = "b_typic:interf:quants"
+    )
+}
+
+relabel_summary <- function(ps_summary) {
+  ps_summary %>%
+    as.data.frame() %>%
+    rownames_to_column() %>%
+    mutate(
+      rowname =
+        case_when(
+          rowname == "b_Intercept" ~ "intercept",
+          rowname == "b_typic" ~ "subj",
+          rowname == "b_interf" ~ "obj",
+          rowname == "b_quants" ~ "quant",
+          rowname == "b_typic:interf" ~ "subj x obj",
+          rowname == "b_typic:quants" ~ "subj x quants",
+          rowname == "b_interf:quants" ~ "obj x quants",
+          rowname == "b_typic:interf:quants" ~ "subj x obj x quants"
+        )
     )
 }
 
