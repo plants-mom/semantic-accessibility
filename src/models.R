@@ -126,9 +126,7 @@ fit_split <- function(data_list, dv_name, split_by = c("quant", "quant_typic"),
           )
         )
       )))
-  }
-
-  if (split == "quant_typic") {
+  } else if (split == "quant_typic") {
     frm <- formula(~ 1 + interf +
       (1 + interf | item) +
       (1 + interf | subj)) %>%
@@ -166,15 +164,44 @@ fit_split <- function(data_list, dv_name, split_by = c("quant", "quant_typic"),
   }
 }
 
+fit_models <- function(data_list, dv_name, .priors,
+                       .return = c("full_models", "split_models", "all"),
+                       remove_zeros = TRUE,
+                       .family = NULL,
+                       optimize_mem = FALSE,
+                       unique_name = FALSE) {
+  .return <- match.arg(.return)
+  if (.return == "full_models") {
+    return(fit_full(
+      data_list, dv_name, .priors, remove_zeros,
+      .family, optimize_mem, unique_name
+    ))
+  } else if (.return == "split_models") {
+    return(fit_split(
+      data_list = data_list, dv_name = dv_name, split_by = "quant",
+      .priors = .priors, remove_zeros = remove_zeros, .family = .family
+    ))
+  } else if (.return == "all") {
+    full_ms <- fit_full(
+      data_list, dv_name, .priors, remove_zeros,
+      .family, optimize_mem, unique_name
+    )
+    split_ms <- fit_split(
+      data_list = data_list, dv_name = dv_name, split_by = "quant",
+      .priors = .priors, remove_zeros = remove_zeros, .family = .family
+    )
+    return(list(full_models = full_ms, split_models = split_ms))
+  }
+}
+
 
 get_model <- function(dv_name, region, type = "full_models") {
+  fit_model_func <- ifelse(type == "full_models", fit_full, fit_split)
   list.files(here("results"), pattern = "region[0-9].csv") %>%
     map(~ read_csv(here("results", .))) %>%
     .[region] %>%
-    fit_models(., dv_name,
-      .return = type
-    ) %>%
-    pluck(type, paste0("region_", region))
+    fit_model_func(., dv_name) %>%
+    pluck(paste0("region_", region))
 }
 
 
@@ -184,18 +211,16 @@ if (sys.nframe() == 0) {
   dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
     map(~ read_csv(here("results", .)))
 
-  ## c("rrdur", "totfixdur") %>%
-  ##   walk(~ fit_models(dfs, ., .priors = priors, optimize_mem = TRUE))
+  map(dfs[6], ~ filter(., gbck != 0)) %>%
+    map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
+    fit_split(., "gbck",
+      split_by = "quant_typic",
+      .priors = priors_binom,
+      remove_zeros = FALSE, optimize_mem = TRUE
+    )
 
-  ## map(dfs, ~ filter(., gbck != 0)) %>%
-  ##   map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
-  ##   fit_models(., "gbck",
-  ##     .priors = priors_binom,
-  ##     remove_zeros = FALSE, optimize_mem = TRUE
-  ##   )
-
-  "gdur" %>%
-    walk(~ fit_split(dfs[6], .,
+  "totfixdur" %>%
+    walk(~ fit_split(dfs[7], .,
       split_by = "quant_typic",
       .priors = priors
     ))
