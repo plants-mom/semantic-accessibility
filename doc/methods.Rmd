@@ -55,7 +55,7 @@ language.
 
 All the models took into
 account three predictors and their interactions as fixed effects: the type of
-quantifier, interference, and typicality. Participant number and item number
+quantifier, object match/mismatch, and subject match/mismatch. Participant number and item number
 were used as random effects. 
 
 These measures were considered: total fixation duration, re-reading
