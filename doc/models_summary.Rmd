@@ -12,7 +12,9 @@ output:
 here::i_am("doc/models_summary.Rmd")
 
 library(here)
+library(tibble)
 library(knitr)
+library(stringr)
 library(dplyr)
 library(purrr)
 library(readr)
@@ -24,9 +26,11 @@ source(here("src/models.R"))
 dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
   map(~ read_csv(here("results", .)))
 
-opts_chunk$set(echo = FALSE, results = "asis", fig.path = here("figs/"), cache = TRUE)
-
-res <- dir_ls(here("results"), regexp =  "[a-z]+_(full)|(split)_models.csv") %>%
+opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+               results = "asis", fig.path = here("figs/"), cache = TRUE)
+options(digits = 5)
+  ## "[a-z]+_(full)|(split)_[a-z_86]+.csv"
+res <- dir_ls(here("results"), regexp = "[a-z]{2,}_((split)|(full))") %>%
   map_dfr(read_csv, .id = "source") %>%
   mutate(source = path_file(source))
 ```
@@ -82,8 +86,8 @@ res %>%
 ```
 
 ```{r pps1, results = "markup" }
-post_plots("totfixdur", dfs, .return = "full_models")$full_models
-post_plots("totfixdur", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
+post_plots("totfixdur", dfs, .return = "full_models")
+post_plots("totfixdur", dfs, make_plot_func = pp_check, .return = "full_models")
 ```
 
 ### Split models
@@ -98,8 +102,39 @@ res %>%
 ```
 
 ```{r pps2, results = "markup" }
-post_plots("totfixdur", dfs, .return = "split_models")$split_models
-post_plots("totfixdur", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
+post_plots("totfixdur", dfs, .return = "split_models")
+## post_plots("totfixdur", dfs, make_plot_func = pp_check)$split_models
+```
+
+### Further split models
+
+Split by both quantifier and subj
+
+```{r tot_split }
+res %>%
+  filter(source == "totfixdur_split_quant_typic_r8.csv") %>%
+  select(-source) %>%
+  mutate(condition = case_when(
+           condition == "EEN_atypical" ~ "een subj mis",
+           condition == "EEN_typical" ~ "een subj match",
+           condition == "GEEN_typical" ~ "geen subj match",
+           condition == "GEEN_atypical" ~ "geen subj mis"),
+         region = "region_8") %>%
+  kable()
+```
+
+```{r plots_tot_split, results = "markup" }
+
+fit_split(dfs[7], "totfixdur",
+          split_by = "quant_typic",
+          .priors = priors
+          ) %>%
+  .[[1]] %>%
+  list_rename("een subj mis" = "EEN_atypical",
+              "een subj match" = "EEN_typical",
+              "geen subj match" = "GEEN_typical",
+              "geen subj mis" = "GEEN_atypical") %>%
+  map(make_plot)
 ```
 
 ## Re-reading duration
@@ -116,8 +151,8 @@ res %>%
 ```
 
 ```{r pps_rrdur, results = "markup" }
-post_plots("rrdur", dfs, .return = "full_models")$full_models
-post_plots("rrdur", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
+post_plots("rrdur", dfs, .return = "full_models")
+post_plots("rrdur", dfs, make_plot_func = pp_check, .return = "full_models")
 ```
 
 ### Split models
@@ -133,103 +168,208 @@ res %>%
 
 
 ```{r pps_rrdur2, results = "markup" }
-post_plots("rrdur", dfs, .return = "split_models")$split_models
-post_plots("rrdur", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
+post_plots("rrdur", dfs, .return = "split_models")
+post_plots("rrdur", dfs, make_plot_func = pp_check, .return = "split_models")
+```
+
+### Further split models
+
+Split by both quantifier and subj
+
+```{r rrdur3 }
+res %>%
+  filter(source == "rrdur_split_quant_typic_r1.csv") %>%
+  select(-source) %>%
+  mutate(condition = case_when(
+           condition == "EEN_atypical" ~ "een subj mis",
+           condition == "EEN_typical" ~ "een subj match",
+           condition == "GEEN_typical" ~ "geen subj match",
+           condition == "GEEN_atypical" ~ "geen subj mis"),
+         region = "region_1") %>%
+  kable()
+```
+
+```{r rrdur3-plot, results = "markup" }
+
+fit_split(dfs[1], "rrdur",
+    split_by = "quant_typic",
+    .priors = priors_binom
+    ) %>%
+    pluck("region_1") %>%
+    list_rename("een subj mis" = "EEN_atypical",
+                      "een subj match" = "EEN_typical",
+                      "geen subj match" = "GEEN_typical",
+                      "geen subj mis" = "GEEN_atypical") %>%
+    map(make_plot)
+```
+
+```{r rrdur4 }
+res %>%
+  filter(source == "rrdur_split_quant_typic_r5.csv") %>%
+  select(-source) %>%
+  mutate(condition = case_when(
+           condition == "EEN_atypical" ~ "een subj mis",
+           condition == "EEN_typical" ~ "een subj match",
+           condition == "GEEN_typical" ~ "geen subj match",
+           condition == "GEEN_atypical" ~ "geen subj mis"),
+         region = "region_5") %>%
+  kable()
+```
+
+```{r rrdur4-plot, results = "markup" }
+fit_split(dfs[5], "rrdur",
+    split_by = "quant_typic",
+    .priors = priors_binom
+    ) %>%
+    pluck("region_5") %>%
+    list_rename("een subj mis" = "EEN_atypical",
+                      "een subj match" = "EEN_typical",
+                      "geen subj match" = "GEEN_typical",
+                      "geen subj mis" = "GEEN_atypical") %>%
+    map(make_plot)
 ```
 
 ## First pass regression path
 
-`rpdur`. Only if `> 0`. Full models.
-
-```{r rpdur }
-res %>%
-  filter(source == "rpdur_full_models.csv") %>%
-  select(-source, -quant) %>%
-  kable()
-```
-
-```{r pps_rpdur, results = "markup" }
-post_plots("rpdur", dfs[6:8], .return = "full_models")$full_models
-post_plots("rpdur", dfs[6:8], make_plot_func = pp_check, .return = "full_models")$full_models
-```
-
-### Split models
-
-Models on data split per quantifier. 
-
-```{r rpdur2 }
-res %>%
-  filter(source == "rpdur_split_models.csv") %>%
-  select(-source) %>%
-  kable()
-```
-
-```{r pps_rpdur2, results = "markup" }
-post_plots("rpdur", dfs[6:8], .return = "split_models")$split_models
-post_plots("rpdur", dfs[6:8], make_plot_func = pp_check, .return = "split_models")$split_models
-```
+There were problems with fitting the `rpdur` measure. So currently we don't have a model for that.
 
 ## First pass first gaze
 
-`gdur`. Full models. Only on regions 6-7, 8, 9.
+```{r rstan_models }
+stanm_pars <- c("alpha", "b_quant", "b_typic", "b_interf",
+                "b_interf_quant", "b_interf_typic",
+                "b_quant_typic", "b_interf_quant_typic",
+                "sigma_e", "sigma_e_shift", "prob", "delta")
+
+stan_betas <- c("b_quant", "b_typic", "b_interf",
+                "b_interf_quant", "b_interf_typic",
+                "b_quant_typic", "b_interf_quant_typic")
+
+stanm_pars_split <- c("alpha", "b_typic", "b_interf",
+                      "b_interf_typic", "sigma_e",
+                      "sigma_e_shift", "prob", "delta")
+
+stan_betas_split <- c("b_typic", "b_interf", "b_interf_typic")
+
+new_labs <- c("alpha" = "intercept", "b_typic" = "subj",
+              "b_interf" = "obj", "b_quant" = "quant",
+              "b_interf_typic" = "subj x obj",
+              "b_quant_typic" = "subj x quants",
+              "b_interf_quant" = "obj x quants",
+              "b_interf_quant_typic" = "subj x obj x quants",
+              "prob" = "theta")
+
+rstan_models_smr <- dir_ls(here("models"),
+                           regexp =  "t?gdur_stan_region[1-9].rds") %>%
+  map(readRDS) %>%
+  map(~ summary(.,
+                pars = stanm_pars,
+                probs = c(0.025, 0.975)
+                )$summary) %>%
+  map(relabel_stan_sum) %>%
+  map_dfr(as.data.frame, .id = "source") %>%
+  mutate(source = path_file(source)) %>%
+  rename(region = source)
+
+```
+
+`gdur`. Stan full model. 
 
 ```{r gdur }
-res %>%
-  filter(source == "gdur_full_models.csv") %>%
-  select(-source, -quant) %>%
+rstan_models_smr %>%
+  filter(grepl("^gdur", region)) %>%
+  mutate(region = sub(".*(region[1-9]).*", "\\1", region)) %>%
   kable()
 ```
 
 ```{r pps_gdur, results = "markup" }
-post_plots("gdur", dfs[6:8], .return = "full_models")$full_models
-post_plots("gdur", dfs[6:8], make_plot_func = pp_check, .return = "full_models")$full_models
+dir_ls(here("models"), regexp =  "gdur_stan_region[1-9].rds") %>%
+  set_names( ~ sub(".*(region[1-9]).*", "gdur_\\1",.)) %>%
+  map(readRDS) %>%
+  map(as.array) %>%
+  map(~ mcmc_intervals(., pars = stan_betas) +
+        scale_y_discrete(labels = new_labs))
 ```
 
 ### Split models
-Models on data split per quantifier. Only on regions 6-7, 8, 9.
 
-```{r gdur2 }
-res %>%
-  filter(source == "gdur_split_models.csv") %>%
-  select(-source) %>%
-  kable()
+```{r gdur-split }
+
+dir_ls(here("models"),
+       regexp =  "[^t]gdur_g?een_stan_region[1-9].rds",
+       perl = TRUE) %>%
+  set_names( ~ sub(".*(gdur_g?een_)stan_(region[1-9]).*", "\\1\\2",.)) %>%
+  map(readRDS) %>%
+  .[order(sub(".*([1-9])", "\\1", names(.)))] %>%
+  map(~ summary(.,
+                pars = stanm_pars_split,
+                probs = c(0.025, 0.975)
+                )$summary) %>%
+  map(relabel_stan_sum) %>%
+  map_dfr(as.data.frame, .id = "condition") %>%
+  kable(digits = 5)
 ```
 
-```{r pps_gdur2, results = "markup" }
-post_plots("gdur", dfs[6:8], .return = "split_models")$split_models
-post_plots("gdur", dfs[6:8], make_plot_func = pp_check, .return = "split_models")$split_models
+```{r gdur-plots-split, results = "markup" }
+dir_ls(here("models"),
+       regexp =  "[^t]gdur_g?een_stan_region[1-9].rds",
+       perl = TRUE) %>%
+  set_names( ~ sub(".*(gdur.*[1-9]).*", "\\1",.)) %>%
+  .[order(sub(".*([1-9])", "\\1", names(.)))] %>%
+  map(readRDS) %>%
+  map(as.array) %>%
+  map(~ mcmc_intervals(., pars = stan_betas_split) +
+        scale_y_discrete(labels = new_labs))
 ```
 
 ## First pass total gaze
 
-`tgdur`. Full models. Only on regions 6-7, 8, 9.
+`tgdur`. Stan full models. 
 
 ```{r tgdur }
-res %>%
-  filter(source == "tgdur_full_models.csv") %>%
-  select(-source, -quant) %>%
+rstan_models_smr %>%
+  filter(grepl("^tgdur", region)) %>%
+  mutate(region = sub(".*(region[1-9]).*", "\\1", region)) %>%
   kable()
 ```
 
 ```{r pps_tgdur, results = "markup" }
-post_plots("tgdur", dfs[6:8], .return = "full_models")$full_models
-post_plots("tgdur", dfs[6:8], make_plot_func = pp_check, .return = "full_models")$full_models
+dir_ls(here("models"), regexp =  "tgdur_stan_region[1-9].rds") %>%
+  set_names( ~ sub(".*(region[1-9]).*", "tgdur_\\1", .)) %>%
+  map(readRDS) %>%
+  map(as.array) %>%
+  map(~ mcmc_intervals(., pars = stan_betas) +
+        scale_y_discrete(labels = new_labs))
 ```
 
 ### Split models
 
-Models on data split per quantifier. Only on regions 6-7, 8, 9.
-
-```{r tgdur2 }
-res %>%
-  filter(source == "tgdur_split_models.csv") %>%
-  select(-source) %>%
-  kable()
+```{r tgdur-split }
+dir_ls(here("models"),
+       regexp =  "tgdur_g?een_stan_region[1-9].rds",
+       perl = TRUE) %>%
+  set_names( ~ sub(".*(tgdur_g?een_)stan_(region[1-9]).*", "\\1\\2",.)) %>%
+  map(readRDS) %>%
+  .[order(sub(".*([1-9])", "\\1", names(.)))] %>%
+  map(~ summary(.,
+                pars = stanm_pars_split,
+                probs = c(0.025, 0.975)
+                )$summary) %>%
+  map(relabel_stan_sum) %>%
+  map_dfr(as.data.frame, .id = "condition") %>%
+  kable(digits = 5)
 ```
 
-```{r pps_tgdur2, results = "markup" }
-post_plots("tgdur", dfs[6:8], .return = "split_models")$split_models
-post_plots("tgdur", dfs[6:8], make_plot_func = pp_check, .return = "split_models")$split_models
+```{r tgdur-split-plots, results = "markup" }
+dir_ls(here("models"),
+       regexp =  "tgdur_g?een_stan_region[1-9].rds",
+       perl = TRUE) %>%
+  set_names( ~ sub(".*(tgdur.*[1-9]).*", "\\1",.)) %>%
+  .[order(sub(".*([1-9])", "\\1", names(.)))] %>%
+  map(readRDS) %>%
+  map(as.array) %>%
+  map(~ mcmc_intervals(., pars = stan_betas_split) +
+        scale_y_discrete(labels = new_labs))
 ```
 
 ## Regressions
@@ -245,8 +385,8 @@ res %>%
 ```
 
 ```{r pps_gbck, results = "markup" }
-post_plots("gbck", dfs, .return = "full_models")$full_models
-post_plots("gbck", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
+post_plots("gbck", dfs, .return = "full_models")
+post_plots("gbck", dfs, make_plot_func = pp_check, .return = "full_models")
 ```
 
 ### Split models
@@ -261,13 +401,47 @@ res %>%
 ```
 
 ```{r pps_gbck_2, results = "markup" }
-post_plots("gbck", dfs, .return = "split_models")$split_models
-post_plots("gbck", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
+post_plots("gbck", dfs, .return = "split_models")
+post_plots("gbck", dfs, make_plot_func = pp_check, .return = "split_models")
 ```
+
+
+### Further split models
+
+Split by both quantifier and subj
+
+```{r tot_spliter }
+res %>%
+  filter(source == "gbck_split_quant_typic_r6.csv") %>%
+  select(-source) %>%
+  mutate(condition = case_when(
+           condition == "EEN_atypical" ~ "een subj mis",
+           condition == "EEN_typical" ~ "een subj match",
+           condition == "GEEN_typical" ~ "geen subj match",
+           condition == "GEEN_atypical" ~ "geen subj mis"),
+         region = "region_6") %>%
+  kable()
+```
+
+```{r plots_tot_split2, results = "markup" }
+
+fit_split(dfs[6], "gbck",
+    split_by = "quant_typic",
+    .priors = priors_binom,
+    remove_zeros = FALSE
+    ) %>%
+    pluck("region_6") %>%
+    list_rename("een subj mis" = "EEN_atypical",
+                      "een subj match" = "EEN_typical",
+                      "geen subj match" = "GEEN_typical",
+                      "geen subj mis" = "GEEN_atypical") %>%
+    map(make_plot)
+```
+
 
 ## Re-readings
 
-`rr`. probability of re-reading
+`rr`. probability of re-reading  
 Bernoulli likelihood with logistic link, results on the logistic scale.
 
 ```{r rr }
@@ -278,8 +452,8 @@ res %>%
 ```
 
 ```{r pps_rr, results = "markup" }
-post_plots("rr", dfs, .return = "full_models")$full_models
-post_plots("rr", dfs, make_plot_func = pp_check, .return = "full_models")$full_models
+post_plots("rr", dfs, .return = "full_models")
+post_plots("rr", dfs, make_plot_func = pp_check, .return = "full_models")
 ```
 
 ### Split models
@@ -294,6 +468,6 @@ res %>%
 ```
 
 ```{r pps_rr_2, results = "markup" }
-post_plots("rr", dfs, .return = "split_models")$split_models
-post_plots("rr", dfs, make_plot_func = pp_check, .return = "split_models")$split_models
+post_plots("rr", dfs, .return = "split_models")
+post_plots("rr", dfs, make_plot_func = pp_check, .return = "split_models")
 ```

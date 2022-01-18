@@ -23,21 +23,26 @@ dataf <- read_csv(here("results/allACTFiles_vp_clean.csv")) %>%
       quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
     ),
     quants = ifelse(quan_cond == "EEN", -1, 1),
-    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1),
-    interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
+    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1), # subj
+    interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),# obj
+    typic_cond = ifelse(typic == 1, "typical", "atypical"),
+    interf_cond = ifelse(interf == 1, "interf", "no_interf"),
     ## additional variables
     rrdur = totfixdur - (gdur - gsacc), # re-reading duration
     rr = as.numeric(rrdur > 0)
   )
 
 
-vars <- c("subj", "item", "rpdur", "tgdur", "totfixdur", "gbck", "gdur", "rr", "rrdur")
+vars <- c("subj", "item", "rpdur", "tgdur", "totfixdur", "gbck",
+          "gdur", "rr", "rrdur")
 
 dataf %>%
   select(
     region,
     all_of(vars),
     quan_cond,
+    typic_cond,
+    interf_cond,
     cond:interf
   ) %>%
   split(.$region) %>%
