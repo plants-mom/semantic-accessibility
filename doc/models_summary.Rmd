@@ -14,7 +14,6 @@ here::i_am("doc/models_summary.Rmd")
 library(here)
 library(tibble)
 library(knitr)
-library(stringr)
 library(dplyr)
 library(purrr)
 library(readr)
@@ -65,12 +64,24 @@ mutate(
       quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
     ),
     quants = ifelse(quan_cond == "EEN", -1, 1),
-    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1),
-    interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
+    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1), # subj match: 1, mismatch -1
+    interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1), # obj match: 1, mismatch -1
 ```
 
 All regions as coded in the file. On the plots the thick line signifies the 0.95 probability interval, the thin line probability of 1.
+Note that the region numbers are a bit misleading. Consult the table below:
 
+| Number in the dataset | Description                                  | How it should be used in the paper               |
+|:---------------------:|:--------------------------------------------:|:------------------------------------------------:|
+| 1                     | subject                                      | 1                                                |
+| 2                     | verb                                         | 2                                                |
+| 3                     | object                                       | 3                                                |
+| 4                     | wrap-up of first sentence                    | (not  present in   all  stimuli,  not  analyzed) |
+| 5                     | introduction         of  second     sentence | 4                                                |
+| 6                     | verb                                         | 5                                                |
+| 7                     | pronoun                                      | 5                                                |
+| 8                     | 3 words  spillover                           | 6                                                |
+| 9                     | wrap-up of  second  sentence                 | 7                                                |
 
 ## Total fixation duration
 
@@ -233,7 +244,8 @@ fit_split(dfs[5], "rrdur",
 
 There were problems with fitting the `rpdur` measure. So currently we don't have a model for that.
 
-## First pass first gaze
+## First pass
+
 
 ```{r rstan_models }
 stanm_pars <- c("alpha", "b_quant", "b_typic", "b_interf",
@@ -260,7 +272,7 @@ new_labs <- c("alpha" = "intercept", "b_typic" = "subj",
               "prob" = "theta")
 
 rstan_models_smr <- dir_ls(here("models"),
-                           regexp =  "t?gdur_stan_region[1-9].rds") %>%
+                           regexp =  "t?gdur_stan_region[5-9].rds") %>%
   map(readRDS) %>%
   map(~ summary(.,
                 pars = stanm_pars,
@@ -272,18 +284,55 @@ rstan_models_smr <- dir_ls(here("models"),
   rename(region = source)
 
 ```
-
-`gdur`. Stan full model. 
+First pass first gaze, `gdur`. Stan full model. Region 5 and the following ones (e.g. starting on critical).
 
 ```{r gdur }
 rstan_models_smr %>%
   filter(grepl("^gdur", region)) %>%
-  mutate(region = sub(".*(region[1-9]).*", "\\1", region)) %>%
+  mutate(region = as.numeric(sub(".*region([1-9]).*",
+                                 "\\1", region))) %>%
   kable()
 ```
 
+Note low eff in region 8 for `sigma_e_shift` and `theta`. In addition the bad fit of that model can be seen doing a posterior predictive check:
+
+```{r pp-check-gdur-r8, results = "markup" }
+
+y <- read_csv(here("results/region8.csv")) %>%
+  filter(gdur != 0) %>%
+  pull(gdur)
+
+ppc_dens_overlay(y,
+                 extract(readRDS(here("models/gdur_stan_region8.rds")),
+                         pars = "yrep")$yrep[1:200,]) +
+  coord_cartesian(## ylim = c(0, 0.005),
+    xlim = c(0, 1500))
+
+```
+
+A slightly better model is a simple lognormal model.
+
+```{r lognormal-gdur-r8 }
+readRDS(here("models/gdur_r8.rds")) %>%
+  ps_rename() %>%
+  kable()
+```
+
+Rhats for this model are better:
+
+```{r rhat-gdur-r8, results = "markup", echo = TRUE}
+rhat(readRDS(here("models/gdur_r8.rds")))[1:8]
+```
+
+But the fit is still not great.
+
+```{r gdur-r8-ppc-brms }
+readRDS(here("models/gdur_r8.rds")) %>%
+  pp_check(nsamples = 100)
+```
+
 ```{r pps_gdur, results = "markup" }
-dir_ls(here("models"), regexp =  "gdur_stan_region[1-9].rds") %>%
+dir_ls(here("models"), regexp =  "[^t]gdur_stan_region[5,6,7,9].rds") %>%
   set_names( ~ sub(".*(region[1-9]).*", "gdur_\\1",.)) %>%
   map(readRDS) %>%
   map(as.array) %>%
@@ -291,12 +340,23 @@ dir_ls(here("models"), regexp =  "gdur_stan_region[1-9].rds") %>%
         scale_y_discrete(labels = new_labs))
 ```
 
+Posterior distribution plot region 8
+
+```{r plot-gdur-r8 }
+
+readRDS(here("models/gdur_r8.rds")) %>%
+  make_plot()
+
+```
+
 ### Split models
+
+NB: Rhats in some of these are really bad. Split models should be only treated as an interpretative help.
 
 ```{r gdur-split }
 
 dir_ls(here("models"),
-       regexp =  "[^t]gdur_g?een_stan_region[1-9].rds",
+       regexp =  "[^t]gdur_g?een_stan_region[5,6,9].rds",
        perl = TRUE) %>%
   set_names( ~ sub(".*(gdur_g?een_)stan_(region[1-9]).*", "\\1\\2",.)) %>%
   map(readRDS) %>%
@@ -312,7 +372,7 @@ dir_ls(here("models"),
 
 ```{r gdur-plots-split, results = "markup" }
 dir_ls(here("models"),
-       regexp =  "[^t]gdur_g?een_stan_region[1-9].rds",
+       regexp =  "[^t]gdur_g?een_stan_region[5,6,9].rds",
        perl = TRUE) %>%
   set_names( ~ sub(".*(gdur.*[1-9]).*", "\\1",.)) %>%
   .[order(sub(".*([1-9])", "\\1", names(.)))] %>%
@@ -322,19 +382,32 @@ dir_ls(here("models"),
         scale_y_discrete(labels = new_labs))
 ```
 
-## First pass total gaze
+## Right bounded
 
-`tgdur`. Stan full models. 
+Aka first pass total gaze, `tgdur`. Stan full models. Note that region 5 fit badly.
 
 ```{r tgdur }
 rstan_models_smr %>%
   filter(grepl("^tgdur", region)) %>%
-  mutate(region = sub(".*(region[1-9]).*", "\\1", region)) %>%
+  mutate(region = sub(".*region([1-9]).*", "\\1", region)) %>%
   kable()
 ```
 
+`tgdur` region 5 simple lognormal model
+
+```{r tgdur-r5 }
+readRDS(here("models/tgdur_r5.rds")) %>%
+  ps_rename() %>%
+  kable()
+```
+
+```{r tgdur-pps-r5 }
+readRDS(here("models/tgdur_r5.rds")) %>%
+  make_plot()
+```
+
 ```{r pps_tgdur, results = "markup" }
-dir_ls(here("models"), regexp =  "tgdur_stan_region[1-9].rds") %>%
+dir_ls(here("models"), regexp =  "tgdur_stan_region[6-9].rds") %>%
   set_names( ~ sub(".*(region[1-9]).*", "tgdur_\\1", .)) %>%
   map(readRDS) %>%
   map(as.array) %>%
@@ -346,7 +419,7 @@ dir_ls(here("models"), regexp =  "tgdur_stan_region[1-9].rds") %>%
 
 ```{r tgdur-split }
 dir_ls(here("models"),
-       regexp =  "tgdur_g?een_stan_region[1-9].rds",
+       regexp =  "tgdur_g?een_stan_region[6-9].rds",
        perl = TRUE) %>%
   set_names( ~ sub(".*(tgdur_g?een_)stan_(region[1-9]).*", "\\1\\2",.)) %>%
   map(readRDS) %>%
@@ -362,7 +435,7 @@ dir_ls(here("models"),
 
 ```{r tgdur-split-plots, results = "markup" }
 dir_ls(here("models"),
-       regexp =  "tgdur_g?een_stan_region[1-9].rds",
+       regexp =  "tgdur_g?een_stan_region[6-9].rds",
        perl = TRUE) %>%
   set_names( ~ sub(".*(tgdur.*[1-9]).*", "\\1",.)) %>%
   .[order(sub(".*([1-9])", "\\1", names(.)))] %>%
