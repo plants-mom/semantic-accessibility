@@ -37,16 +37,17 @@ res <- dir_ls(here("results"), regexp = "[a-z]{2,}_((split)|(full))") %>%
 > ‘The professor has [a/no] [son/daughter]. The past few years, [he/she] unfortunately had to work during all the holidays.
 
 there are 8 means in the experiment (quantifier, subject, object conditions):
-```
-a) EEN,  MATCH, MATCH (typical,  int)   -- prof ... a  son      ... he
-b) EEN,  MATCH, MIS   (typical,  noint) -- prof ... a  daughter ... he
-c) EEN,  MIS,   MATCH (atypical, int)   -- prof ... a  daughter ... she
-d) EEN,  MIS,   MIS   (atypical, noint) -- prof ... a  son      ... she
-e) GEEN, MATCH, MATCH (typical,  int)   -- prof ... no son      ... he
-f) GEEN, MATCH, MIS   (typical,  noint) -- prof ... no daughter ... he
-g) GEEN, MIS,   MATCH (atypical, int)   -- prof ... no daughter ... she
-h) GEEN, MIS,   MIS   (atypical, noint) -- prof ... no son      ... she
-```
+
+| quantifier | subject (typicality) | object (interference) | alternative       | stimuli                      |
+|:----------:|:--------------------:|:---------------------:|:-----------------:|:----------------------------:|
+| EEN        | MATCH                | MATCH                 | (typical, int)    | prof ... a son ... he        |
+| EEN        | MATCH                | MIS                   | (typical, noint)  | prof ... a daughter ... he   |
+| EEN        | MIS                  | MATCH                 | (atypical, int)   | prof ... a daughter ... she  |
+| EEN        | MIS                  | MIS                   | (atypical, noint) | prof ... a son ... she       |
+| GEEN       | MATCH                | MATCH                 | (typical, int)    | prof ... no son ... he       |
+| GEEN       | MATCH                | MIS                   | (typical, noint)  | prof ... no daughter ... he  |
+| GEEN       | MIS                  | MATCH                 | (atypical, int)   | prof ... no daughter ... she |
+| GEEN       | MIS                  | MIS                   | (atypical, noint) | prof ... no son ... she      |
 
 Contrasts:
 
