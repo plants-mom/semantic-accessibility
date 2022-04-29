@@ -5,17 +5,21 @@
 here::i_am("src/plots.R")
 
 library(here)
+library(forcats)
 library(knitr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(bayesplot)
 library(cowplot)
 library(readr)
 library(fs)
 library(tidyr)
 library(purrr)
+library(brms)
 library(ggtext)
 
+source(here("src/models_summary.R"))
 ##
 ## prior predictive check plots
 ##
@@ -115,11 +119,183 @@ hist_r6 <- function(var) {
     facet_wrap(~cond)
 }
 
+ms_r3 <- function() {
+  f <- compose(readRDS, here)
+  list(
+    TFD = f("models/totfixdur_r3.rds"),
+    RRDUR = f("models/rr_r3.rds")
+  ) %>%
+    map_dfr(make_plot_data, .id = "measure") %>%
+    measure_summary()
+}
+
+ms_r1 <- function() {
+  f <- compose(readRDS, here)
+  list(
+    TFD = f("models/totfixdur_r1.rds"),
+    RRDUR = f("models/rr_r1.rds")
+  ) %>%
+    map_dfr(make_plot_data, .id = "measure") %>%
+    measure_summary()
+}
+
+rts <- function(region) {
+  ##
+  ## TFD RB and RRD measures plot
+  ##
+  f <- compose(readRDS, here, paste0)
+  list(
+    TFD = make_plot_data(f("models/totfixdur_r", region, ".rds")),
+    RB = make_plot_data_stan(f("models/tgdur_stan_region", region, ".rds")),
+    RRD = make_plot_data(f("models/rrdur_r", region, ".rds"))
+  ) %>%
+    bind_rows(.id = "measure") %>%
+    measure_summary()
+}
+
+ms_r6 <- function() {
+  f <- compose(readRDS, here)
+  list(
+    TFD = make_plot_data(f("models/totfixdur_r6.rds")),
+    RB = make_plot_data_stan(f("models/tgdur_stan_region6.rds"))
+    RRD = make_plot_data(f("models/rrdur_r6.rds"))
+  ) %>%
+    bind_rows(.id = "measure") %>%
+    measure_summary()
+}
+
+ms_r8 <- function() {
+  f <- compose(readRDS, here)
+  list(
+    TFD = make_plot_data(f("models/totfixdur_r8.rds")),
+    RB = make_plot_data_stan(f("models/tgdur_stan_region8.rds")),
+    RRD = make_plot_data(f("models/rrdur_r8.rds"))
+  ) %>%
+    bind_rows(.id = "measure") %>%
+    measure_summary()
+}
+
+
+ms_r9 <- function() {
+  f <- compose(readRDS, here)
+  list(
+    TFD = make_plot_data(f("models/totfixdur_r9.rds")),
+    RB = make_plot_data_stan(f("models/tgdur_stan_region9.rds")),
+    RRD = make_plot_data(f("models/rrdur_r9.rds"))
+  ) %>%
+    bind_rows(.id = "measure") %>%
+    measure_summary()
+}
+
+regr_rr <- function(region) {
+  ##
+  ## regression and re-reading probability plot
+  ##
+  f <- compose(make_plot_data, readRDS, here)
+  list(
+    RR = f(paste0("models/rr_r", region, ".rds")),
+    RP = f(paste0("models/gbck_r", region, ".rds"))
+  ) %>%
+    bind_rows(.id = "measure") %>%
+    measure_summary()
+
+}
+
+measure_summary <- function(plot_data, .measure = "measure") {
+  dod <- 0.5
+  ## pal <- "Set1"
+  pal <- "Set2"
+
+  plot_data %>%
+    ggplot(., aes(fill = .data[[.measure]], color = .data[[.measure]])) +
+    geom_linerange(aes(xmin = ll, xmax = hh, y = parameter),
+      position = position_dodge(dod)
+    ) +
+    geom_linerange(aes(xmin = l, xmax = h, y = parameter),
+      size = 1.5, show.legend = FALSE,
+      position = position_dodge(dod)
+    ) +
+    geom_point(aes(x = m, y = parameter),
+      size = 2, shape = 21,
+      position = position_dodge(dod)
+    ) +
+    theme_minimal() +
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank()) +
+    scale_color_brewer(palette = pal) +
+    scale_fill_brewer(palette = pal)
+}
+
+make_plot_data <- compose(
+  ~ mcmc_intervals_data(.x, prob = 0.95, prob_outer = 1, point_est = "mean"),
+  ~ relabel_samples(.),
+  ~ posterior_samples(., pars = "b_[^I]") # this is deprecated
+  ## ~ as_draws_df(., variable = "b_[^I]", regex = TRUE)
+)
+
+make_plot_data_stan <- compose(
+  ~ mutate(.,
+    parameter = fct_recode(parameter,
+      "intercept" = "alpha",
+      "subj" = "b_typic",
+      "obj" = "b_interf",
+      "quant" = "b_quant",
+      "subj x obj" = "b_interf_typic",
+      "subj x quants" = "b_quant_typic",
+      "obj x quants" = "b_interf_quant",
+      "subj x obj x quants" = "b_interf_quant_typic",
+      "theta" = "prob"
+    )
+  ),
+  ~ mcmc_intervals_data(.,
+    prob = 0.95, prob_outer = 1,
+    point_est = "mean",
+    regex_pars = "b_[^I]"
+  ),
+)
+
+r6_split_plot <- function() {
+  dod <- 0.5
+  pal <- "Set1"
+
+  f <- compose(readRDS, here)
+  c(
+    een = "models/totfixdur_een_r6.rds",
+    geen = "models/totfixdur_geen_r6.rds"
+  ) %>%
+    map(compose(make_plot_data, f)) %>%
+    bind_rows(.id = "quantifier") %>%
+    ## filter(parameter %in% c("subj", "obj")) %>%
+    filter(parameter == "obj") %>%
+    measure_summary(.measure = "quantifier")
+}
+
+
+r6_by_cond <- function(measure) {
+  pal <- "Set1"
+
+  read_csv(here("results/region6.csv")) %>%
+    mutate(
+      quantifier = as.factor(if_else(quan_cond == "EEN",
+        "positive quantifier", "negative quantifier"
+      )),
+      subject = as.factor(if_else(typic_cond == "typical", "match", "mis")),
+      object = as.factor(if_else(interf_cond == "interf", "match", "mis"))
+    ) %>%
+    filter(.data[[measure]] != 0) %>%
+    ggplot(aes(object, .data[[measure]], colour = subject)) +
+    geom_boxplot() +
+    facet_wrap(~quantifier) +
+    theme_minimal() +
+    ylab("reading time (ms)") +
+    ## theme(axis.title.x = element_blank(), axis.title.y = element_blank()) +
+    scale_color_brewer(palette = pal) +
+    scale_fill_brewer(palette = pal)
+}
 
 if (sys.nframe() == 0) {
   source(here("src/priors.R"))
 
-  ## ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv"))
+  ## ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv")) # nolint
   pp <- ppc_rt_plots(here("results/sim_summary.csv"), priors)
   measure_by_cond()
   ggsave(here("figs/measure_by_cond.png"))
