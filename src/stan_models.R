@@ -5,6 +5,7 @@
 here::i_am("src/stan_models.R")
 
 library(here)
+library(fs)
 library(dplyr)
 library(purrr)
 library(rstan)
@@ -27,15 +28,78 @@ prepare_data <- function(var, region) {
 }
 
 if (sys.nframe() == 0) {
-  r6 <- read_csv(here("results/region6.csv"))
+  dfs <- dir_ls(here("results"), regexp = "region[0-9].csv") %>%
+    map(read_csv)
 
-  c(tgdur = "tgdur", gdur = "gdur") %>%
-    map(~ prepare_data(., r6)) %>%
+  names(dfs) <- names(dfs) %>%
+    path_file() %>%
+    path_ext_remove()
+
+  dfs %>%
+    map(~ filter(., quants == 1)) %>% # GEEN
+    map(~ prepare_data("tgdur", .)) %>%
+    map(~ within(., rm("quant"))) %>%
+    map(~ stan(
+      file = here("src/mixture_everywhere_split.stan"),
+      data = .,
+      control = list(adapt_delta = 0.99, max_treedepth = 15),
+      iter = 4000
+    )) %>%
+    iwalk(~ saveRDS(.x, here("models", paste0("tgdur_geen_stan_", .y, ".rds"))))
+
+  dfs %>%
+    map(~ filter(., quants == -1)) %>% # EEN
+    map(~ prepare_data("tgdur", .)) %>%
+    map(~ within(., rm("quant"))) %>%
+    map(~ stan(
+      file = here("src/mixture_everywhere_split.stan"),
+      data = .,
+      control = list(adapt_delta = 0.99, max_treedepth = 15),
+      iter = 4000
+    )) %>%
+    iwalk(~ saveRDS(.x, here("models", paste0("tgdur_een_stan_", .y, ".rds"))))
+
+  dfs %>%
+    map(~ filter(., quants == 1)) %>% # GEEN
+    map(~ prepare_data("gdur", .)) %>%
+    map(~ within(., rm("quant"))) %>%
+    map(~ stan(
+      file = here("src/mixture_everywhere_split.stan"),
+      data = .,
+      control = list(adapt_delta = 0.99, max_treedepth = 15),
+      iter = 4000
+    )) %>%
+    iwalk(~ saveRDS(.x, here("models", paste0("gdur_geen_stan_", .y, ".rds"))))
+
+  dfs %>%
+    map(~ filter(., quants == -1)) %>% # EEN
+    map(~ prepare_data("gdur", .)) %>%
+    map(~ within(., rm("quant"))) %>%
+    map(~ stan(
+      file = here("src/mixture_everywhere_split.stan"),
+      data = .,
+      control = list(adapt_delta = 0.99, max_treedepth = 15),
+      iter = 4000
+    )) %>%
+    iwalk(~ saveRDS(.x, here("models", paste0("gdur_een_stan_", .y, ".rds"))))
+
+  dfs %>%
+    map(~ prepare_data("tgdur", .)) %>%
     map(~ stan(
       file = here("src/mixture_everywhere.stan"),
       data = .,
       control = list(adapt_delta = 0.99, max_treedepth = 15),
       iter = 4000
     )) %>%
-    iwalk(~ saveRDS(.x, here("models", paste0(.y, "_stan_r6", ".rds"))))
+    iwalk(~ saveRDS(.x, here("models", paste0("tgdur_stan_", .y, ".rds"))))
+
+  dfs %>%
+    map(~ prepare_data("gdur", .)) %>%
+    map(~ stan(
+      file = here("src/mixture_everywhere.stan"),
+      data = .,
+      control = list(adapt_delta = 0.99, max_treedepth = 15),
+      iter = 4000
+    )) %>%
+    iwalk(~ saveRDS(.x, here("models", paste0("gdur_stan_", .y, ".rds"))))
 }

@@ -1,10 +1,11 @@
 ##
-## helper functions and summaries for the fitted brms models
+## helper functions and summaries for the fitted brms and rstan models
 ##
 
 here::i_am("src/models_summary.R")
 
 library(here)
+library(fs)
 library(dplyr)
 library(brms)
 library(bayesplot)
@@ -141,6 +142,7 @@ write_summary <- function(var_name, data_list = dfs, mods = c("full", "split"),
 }
 
 if (sys.nframe() == 0) {
+  source(here("src/priors.R"))
   source(here("src/models.R"))
 
   dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
@@ -149,27 +151,62 @@ if (sys.nframe() == 0) {
   ## c("gdur", "tgdur", "rpdur") %>%
   ##   walk(~ write_summary(., dfs[6:8]))
 
-  c("totfixdur", "rrdur", "gbck", "rr") %>%
-    walk(~ write_summary(., dfs, mods = "full"))
+  ## c("totfixdur", "rrdur", "gbck", "rr") %>%
+  ##   walk(~ write_summary(., dfs, mods = "full"))
 
-  c("totfixdur", "rrdur", "gbck", "rr") %>%
-    walk(~ write_summary(., dfs, mods = "split"))
+  ## c("totfixdur", "rrdur", "gbck", "rr") %>%
+  ##   walk(~ write_summary(., dfs, mods = "split"))
 
-  fit_split(dfs[6], "gbck",
-    split_by = "quant_typic",
-    .priors = priors_binom,
-    remove_zeros = FALSE
-  ) %>%
-    map(msummary, id = "condition") %>%
-    pluck("region_6") %>%
-    write_csv(here("results/gbck_split_quant_typic_r6.csv"))
+  ## fit_split(dfs[6], "gbck",
+  ##   split_by = "quant_typic",
+  ##   .priors = priors_binom,
+  ##   remove_zeros = FALSE
+  ## ) %>%
+  ##   map(msummary, id = "condition") %>%
+  ##   pluck("region_6") %>%
+  ##   write_csv(here("results/gbck_split_quant_typic_r6.csv"))
 
-  fit_split(dfs[7], "totfixdur",
-    split_by = "quant_typic",
-    .priors = priors
-  ) %>%
-    .[[1]] %>%
-    map(msummary, id = "condition") %>%
-    pluck("region_8") %>%
-    write_csv(here("results/totfixdur_split_quant_typic_r8.csv"))
+  ## fit_split(dfs[7], "totfixdur",
+  ##   split_by = "quant_typic",
+  ##   .priors = priors
+  ## ) %>%
+  ##   .[[1]] %>%
+  ##   map(msummary, id = "condition") %>%
+  ##   pluck("region_8") %>%
+  ##   write_csv(here("results/totfixdur_split_quant_typic_r8.csv"))
+  ##
+  ##
+
+  stanm_pars <- c("alpha", "b_quant", "b_typic", "b_interf",
+                "b_interf_quant", "b_interf_typic",
+                "b_quant_typic", "b_interf_quant_typic",
+                "sigma_e", "sigma_e_shift", "prob", "delta")
+
+  dir_ls(here("models"), regexp =  "t?gdur_stan_region[1-9].rds") %>%
+    map(readRDS) %>%
+    map(~ summary(.,
+                  pars = stanm_pars,
+                  probs = c(0.025, 0.975)
+                  )$summary) %>%
+    map(relabel_stan_sum) %>%
+    map_dfr(as.data.frame, .id = "source") %>%
+    mutate(source = path_file(source)) %>%
+    rename(region = source) %>%
+    write_csv(here("results/stan_models_summary.csv"))
+
+  ## fit_split(dfs[1], "rrdur",
+  ##   split_by = "quant_typic",
+  ##   .priors = priors
+  ## ) %>%
+  ##   map(msummary, id = "condition") %>%
+  ##   pluck("region_1") %>%
+  ##   write_csv(here("results/rrdur_split_quant_typic_r1.csv"))
+
+  ## fit_split(dfs[5], "rrdur",
+  ##   split_by = "quant_typic",
+  ##   .priors = priors
+  ## ) %>%
+  ##   map(msummary, id = "condition") %>%
+  ##   pluck("region_5") %>%
+  ##   write_csv(here("results/rrdur_split_quant_typic_r5.csv"))
 }
