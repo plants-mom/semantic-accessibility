@@ -24,6 +24,8 @@ source(here("src/models_summary.R"))
 ## prior predictive check plots
 ##
 
+cur_palette <- "Set2"
+
 ppc_rt_plots <- function(file_in, priors, save = FALSE) {
 
   ## The priors here do not determine the priors used for the simulations,
@@ -153,39 +155,6 @@ rts <- function(region) {
     measure_summary()
 }
 
-ms_r6 <- function() {
-  f <- compose(readRDS, here)
-  list(
-    TFD = make_plot_data(f("models/totfixdur_r6.rds")),
-    RB = make_plot_data_stan(f("models/tgdur_stan_region6.rds"))
-    RRD = make_plot_data(f("models/rrdur_r6.rds"))
-  ) %>%
-    bind_rows(.id = "measure") %>%
-    measure_summary()
-}
-
-ms_r8 <- function() {
-  f <- compose(readRDS, here)
-  list(
-    TFD = make_plot_data(f("models/totfixdur_r8.rds")),
-    RB = make_plot_data_stan(f("models/tgdur_stan_region8.rds")),
-    RRD = make_plot_data(f("models/rrdur_r8.rds"))
-  ) %>%
-    bind_rows(.id = "measure") %>%
-    measure_summary()
-}
-
-
-ms_r9 <- function() {
-  f <- compose(readRDS, here)
-  list(
-    TFD = make_plot_data(f("models/totfixdur_r9.rds")),
-    RB = make_plot_data_stan(f("models/tgdur_stan_region9.rds")),
-    RRD = make_plot_data(f("models/rrdur_r9.rds"))
-  ) %>%
-    bind_rows(.id = "measure") %>%
-    measure_summary()
-}
 
 regr_rr <- function(region) {
   ##
@@ -198,13 +167,12 @@ regr_rr <- function(region) {
   ) %>%
     bind_rows(.id = "measure") %>%
     measure_summary()
-
 }
 
-measure_summary <- function(plot_data, .measure = "measure") {
+measure_summary <- function(plot_data,
+                            .measure = "measure",
+                            pal = cur_palette) {
   dod <- 0.5
-  ## pal <- "Set1"
-  pal <- "Set2"
 
   plot_data %>%
     ggplot(., aes(fill = .data[[.measure]], color = .data[[.measure]])) +
@@ -253,9 +221,8 @@ make_plot_data_stan <- compose(
   ),
 )
 
-r6_split_plot <- function() {
+r6_split_plot <- function(pal = cur_palette) {
   dod <- 0.5
-  pal <- "Set1"
 
   f <- compose(readRDS, here)
   c(
@@ -270,9 +237,7 @@ r6_split_plot <- function() {
 }
 
 
-r6_by_cond <- function(measure) {
-  pal <- "Set1"
-
+r6_by_cond <- function(measure, pal = cur_palette) {
   read_csv(here("results/region6.csv")) %>%
     mutate(
       quantifier = as.factor(if_else(quan_cond == "EEN",
