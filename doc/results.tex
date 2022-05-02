@@ -1,0 +1,160 @@
+% set_parent('interference-anaphora-resolution_14-1.tex')
+
+We always report a mean of the estimate and 95\% credible intervals.
+The detailed results of all the measurements are available online \cite{osf-repo}. Below we concentrate on the results particularly worth mentioning.
+In some cases, to make the interactions easier to interpret, we split the data by quantifier and fit the exact same models to resulting subsets of data. It should be noted, that this is only an interpretative device, as taking subsets of data can reduce shrinkage of the effects and result in inflated effect sizes.
+
+
+
+\subsubsection{Region 1 (subject)}
+
+The effect of subject was the most salient effect in region 1.
+Measured on Re-reading Duration (RRDUR) it was: -0.053, (-0.104, -0.001) log-ms. Similar results were also observed on
+total fixation duration (TFD) and
+Re-readings (RR). This means that reading times increased in the subject
+mismatch condition, compared to the subject match condition. The other effects
+were either close to 0 or their 95\% CrI spanned across the 0 point which makes
+strong inferences about the direction of the effect risky. The only exception
+was the interaction of subject $\times$ object conditions: 0.045, (-0.004, 0.094)) log-ms. This interaction is clearly driven by the subject condition, since the
+effect of object is closer to 0. The RRDUR results observed on region 1 are
+summarized on the figure~\ref{fig:rrdur-region1}.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-region1-1} \caption{\label{fig:rrdur-region1}Effects measured on RRDUR and TFD at region 1 in log-ms. The dot denotes the median, the thick lines the 95\% credible intervals. The thin lines the whole probability space.}\label{fig:fig-region1}
+\end{figure}
+
+\end{knitrout}
+
+
+\subsubsection{Region 3 (quantifier and object)}
+The region 3 contained the object of the first
+sentence preceded by a quantifier. The strongest effect observed at this region
+was, maybe not surprisingly, the effect of quantifier. Again, this can be seen on RR, TFD, and RRDUR.
+The last of these was: 0.126, (0.073, 0.178) log-ms. This indicates
+that the participants paid more attention (i.e. were more likely to re-read, took more time when re-reading and spend more time in that region) when the quantifier ``geen'' was used. The summary of the results from the region 3 can be seen on the figure~\ref{fig:summary-region3}.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-region3-1} \caption{\label{fig:summary-region3}Effects measured on RRDUR and TFD at region 3 in log-ms. The dot denotes the median, the thick lines the 95\% credible intervals. The thin lines the whole probability space.}\label{fig:fig-region3}
+\end{figure}
+
+\end{knitrout}
+% jw: again, I'd refrain from mentioning the split analysis if it doesn't help the reader. I believe making strong inferences from the split analysis is incorrect.
+%
+% When the data are split down by quantifier no clear differences have been found between positive and negative quantifiers, although it could be argued that the negative effect of a mismatching subject is larger in combination with a negative quantifier, compared to a positive quantifier.
+
+
+
+\subsubsection{Region 5 (critical region)}
+%=region_6
+
+Region 5 is the critical region which consists of the verb and the pronoun. On right-bounded (RB) we observed strong negative effects of subject: -0.012, (-0.027, 0.003) log-ms, and object: -0.012, (-0.028, 0.003) log-ms, and even stronger positive effect of quantifier: 0.018, (0.003, 0.033) log-ms. This means that in the mismatching subject condition the participants spend more time in that region before leaving to the right than in the matching subject condition, and similarly for the object conditions. The results for the quantifier indicate that the participants spend more time in the region when the negative quantifier was used.
+Somewhat similar, although more spread-out, results were observed on TFD. The effect of subject was: -0.088, (-0.123, -0.051) log-ms, the effect of object was negative but weaker: -0.037, (-0.071, -0.002) log-ms, and finally the effect of quantifier was: 0.025, (-0.01, 0.058) log-ms.
+
+An important effect at the critical region and the following ones, is the
+interaction between the subject/object and the quantifier, as it can give us a direct
+insight into the influence of the inaccessible antecedent. On TFD we observed a most-likely negative interaction between subject and quantifier: -0.027, (-0.058, 0.003) log-ms, and also a similarly uncertain positive interaction of object and quantifier: 0.027, (-0.007, 0.06) log-ms.
+First we explore the subject $\times$ quantifier interaction. Inspecting models fit on data split per quantifier, reveals that under both conditions mismatching subject evoked longer times.
+The median of the effect was further from 0 for the negative quantifier: -0.116, (-0.159, -0.074) log-ms, than for the positive quantifier: -0.06, (-0.108, -0.012).
+Therefore, for both quantifiers a mismatching subject resulted in a slowdown, but in the case of the negative quantifier the slowdown was larger.  The region took longer in the case of mismatching subject in the non-referential quantifier condition than in the referential quantifier condition.
+A similar analysis of the object $\times$ quantifier interaction shows, that in the case of the referential quantifier the effect of object was: -0.064, (-0.113, -0.014) log-ms, while in the case of the non-referential: -0.008, (-0.057, 0.04) log-ms. Hence, there was some slow-down on the mismatching object in the former case, but almost none in the latter case.
+
+% When examining these two interactions on other measures, an interesting pattern emerges.
+% On first pass (FP) we observe a positive interaction between the subject and the quantifier est(6, "subj x quants", "gdur"), (qua(6, "subj x quants", "gdur")) log-ms, and almost no effect of object $\times$ quantifier: est(6, "obj x quants", "gdur"), (qua(6, "obj x quants", "gdur")) log-ms.
+Comparing RB with TFD, reveals an interesting pattern. On RB the subject $\times$ quantifier interaction is negative: -0.003, (-0.018, 0.012) log-ms, and the object $\times$ quantifier is almost 0: \ensuremath{2.428\times 10^{-5}}, (-0.015, 0.015) log-ms.
+As discussed above, on TFD the subject $\times$ quantifier interaction is negative, but larger than on RB, and object $\times$ quantifier interaction becomes positive. Since each of these measures records subsequent stages of the reading process as readers progress through the text, this pattern tells us something about the processing time-course.
+Visual summaries of RB and TFD measures across conditions can be seen on figures~\ref{fig:visual-summary-crit-rb},\ref{fig:visual-summary-crit-tfd} respectively.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-critical-1} \caption{\label{fig:visual-summary-crit-tfd}Summary of TFD. The lower and upper hinges represent the first and third quartile, the line in the middle the median. The whiskers reach the biggest/smallest value no further than 1.5 $	imes$ inter-quartile range from the hinge.}\label{fig:fig-critical}
+\end{figure}
+
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-critical2-1} \caption{\label{fig:visual-summary-crit-rb}Summary of RB. The lower and upper hinges represent the first and third quartile, the line in the middle the median. The whiskers reach the biggest/smallest value no further than 1.5 $	imes$ inter-quartile range from the hinge.}\label{fig:fig-critical2}
+\end{figure}
+
+\end{knitrout}
+
+\begin{comment}
+
+- On FP, at the positive quantifier both subject and object are estimated to be negative, i.e. the mismatching item resulted in longer times.
+- At the negative quantifier the effect of subject is much closer to 0, with 95\% interval spanning across the 0 point, while the effect of object still remains negative.
+For FP this means: subj mismatch read longer under EEN, not so much under GEEN. object mismatch read longer under both -- in the subject case that's a bit weird. we would assume that under GEEN mis subject would be read longer, because the only available antecedent mismathces.  but then in the object case it doesn't seem to block the interfering one (object)?
+
+- On RB, at the positive quantifier the effect of object is negative, while the effect of subject is negative but the 95\% credible interval spans across the 0 point.
+- At the negative quantifier the effect of object moves closer to 0, while the effect of subject moves away.
+RB means: subject mismatch read only slightly longer than match under EEN. (not much of an effect of atypicality) object mismatch read longer (effect of interference). under GEEN mismatching subject read longer, while the effect of object diminishes.
+Here this doesn't make much sense. Why would GEEN make mis subj take longer?
+GEEN diminishing interference effect again possibly means that it blocks the availability of an antecedent, but this result conflicts with what was observed on FP.
+
+- TFD: EEN subject and object both negative, on GEEN subject strongly negative, object almost 0
+So under EEN both mismatching items read longer under EEN than their counterparts, under GEEN mis subject match longer, mis object read similarly as match.
+
+As mentioned before, for right bounded we fit a mixture model which required some additional parameters to be estimated. It is worth mentioning that the residual noise for the shifted component was much bigger than the noise for the base component: 0.47, (0.444, 0.497) log-ms vs 0.116, (0.099, 0.135) log-ms.
+\end{comment}
+
+The effect on the probability of regression at the object condition was
+almost exactly 0: 0.003, (-0.243, 0.244) log-odds. In case of subject it was most probably negative: -0.22, (-0.5, 0.04) log-odds, and the effect of quantifier was the opposite of that, i.e. most probably positive: 0.151, (-0.133, 0.444) log-odds. This shows that whether participants regressed on the critical region was not influenced by object conditions, was most probably influenced to a bigger extent in the mismatching subject condition, and similarly by a negative quantifier.
+It is important to note that the interaction effect of object $\times$ quantifier was largely positive: 0.206, (-0.016, 0.439) log-odds. Examining the split models, suggests that under the positive quantifier the effect of object was largely negative, while under the negative quantifier it was largely positive. Mismatching object influenced the probability of regression under the positive quantifier, while under the non-referential quantifier a similar effect was caused by a matching object.
+Summary of RB and TFD is shown on the figure~\ref{fig:region5-rb-tfd}.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-region5-1} \caption{\label{fig:region5-rb-tfd}Effects measured on TFD, and RB at region 5 in log-ms. The dot denotes the median, the thick lines the 95\% credible intervals. The thin lines the whole probability space.}\label{fig:fig-region5}
+\end{figure}
+
+\end{knitrout}
+
+% right bounded (firs pass total gaze, tgdur), total times (totfixdur), prob of regression (regression
+% [there are no splittimes models of FP and RB yet]
+
+
+\subsubsection{Region 6 (post-critical region)}
+%=region_8
+
+Region 6, the post-critical region, consisted of the three words following the critical region.
+We observed a strong effect of subject measured at TFD: -0.047, (-0.076, -0.018) log-ms. This means that, in the mismatching subject conditions the region was read slower. We observed also, a most probably negative interaction of subject $\times$ quantifier: -0.026, (-0.056, 0.004) log-ms, and a positive interaction of object $\times$ quantifer: 0.024, (-0.002, 0.051) log-ms.
+% Finally, a three-way interaction of subject $\times$ object $\times$ quantifier was most probably negative: est(8, "subj x obj x quants", "totfixdur_full"), (qua(8, "subj x obj x quants", "totfixdur_full")) log-ms.
+
+At the positive quantifier, effects for both subject and object were negative but highly uncertain (subject: -0.023, (-0.062, 0.016) log-ms, object: -0.015, (-0.059, 0.03) log-ms). At the negative quantifier, the effect of subject was strongly negative: -0.073, (-0.118, -0.028) log-ms, while the effect of object was most probably positive: 0.033, (-0.007, 0.073) log-ms.
+% Interaction of subject $\times$ object changed between the quantifiers from:
+% est(8, "subj x obj", "totfixdur_split", "EEN"), (qua(8, "subj x obj", "totfixdur_split", "EEN")) log-ms in the positive quantifer, to: est(8, "subj x obj", "totfixdur_split", "GEEN"), (qua(8, "subj x obj", "totfixdur_split", "GEEN")) log-ms in the negative quantifier.
+This shows that, in the positive quantifier condition the region was more likely to be read longer in the mismatching subject and object condition. While, in the negative quantifier condition when subject mismatched the region was still read longer, but it was read quicker when the object mismatched.
+
+At RB the most salient effect was that of mismatching subject: -0.05, (-0.076, -0.022) log-ms. The other effects were either close to 0, or clearly driven by the size of the effect of subject (positive subject $\times$ object interaction, and negative subject $\times$ object $\times$ quantifier interaction).
+
+Similarly, the probability of regression was the most affected by mismatching subject: -0.291, (-0.463, -0.125) log-odds. The other effects were close to 0.
+Summary of RB and TFD is shown on the figure~\ref{fig:region6-rb-tfd}.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-region6-1} \caption{\label{fig:region6-rb-tfd}Effects measured on TFD, and RB at region 6 in log-ms. The dot denotes the median, the thick lines the 95\% credible intervals. The thin lines the whole probability space.}\label{fig:fig-region6}
+\end{figure}
+
+\end{knitrout}
+
+\subsection{Summary}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{/home/jas/surfd_sync/Documents/experiments/var/tijns_data/figs/fig-obj-quant-int-1} \caption[caption]{caption}\label{fig:fig-obj-quant-int}
+\end{figure}
+
+\end{knitrout}
+
+On all the analyzed regions, a large slowdown connected to a mismatching subject was observed, which is a replication of the typicality effect. On the critical region (5) a mismatching object also had an inhibitory effect.
+Also on that region, a negative quantifier was associated with a longer reading times. At the critical and post-critical regions the estimates of the interactions between the subject/object and the quantifier were mostly negative and positive respectively. This is partially inline with a hypothesis that negative quantifier renders the antecedent in its scope unavailable.
+
+Consider the critical region: inspecting the subject $\times$ quantifier interaction with the use of models fit on the split dataset shows that under both quantifiers the effect of subject was negative. It is not surprising: establishing a dependency between a noun and a typicality-mismatching pronoun is a difficult task. However, the effect is even stronger in the case of the negative quantifier. This suggests that creating the correct parse was even more difficult in that situation. A possible explanation, which is inline with the initial hypothesis, is that this was caused because the quantifier made the other matching antecedent unavailable.
+
+Similar reasoning can be partially applied to the estimates of the object $\times$ quantifier interaction.
+Under the positive quantifier the effect of object was negative; the mismatching object elicited longer times. Again, this is not surprising: in the mismatching object condition the pronoun could only be attached to the correct antecedent, and the parser was forced to retrieve it. This was not the case in the matching object condition where the gender of the object was aligned with the pronoun resulting in a speed-up, i.e. a facilitatory interference.
+
+This image is tainted by the other leg of that interaction, i.e. the effect being almost 0 under the negative quantifier. This suggests that when the non-referential quantifier was used the difference between matching and mismatching object was almost non-existent, which in turn means that the mismatching objects were read faster under the negative quantifier than under the positive one. If negative quantifier rendered the object inaccessible this would not have been observed.
+Similar remarks also apply to post-critical region, with a caveat that the effect of object is very small in that region.
+
