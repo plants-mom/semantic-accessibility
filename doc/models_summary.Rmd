@@ -1,6 +1,6 @@
 ---
-title: eye-tracking models
-author: jw
+title: "Semantic inaccessibility and interference: eye-tracking models"
+author: anonymous
 output: 
   html_document:
     toc: true

@@ -9,7 +9,9 @@ Contents of this dir.
 - mybib.bib: all the bibliography
 - references.bib: my original references
 - results-eyetracking.tex: knitted results.Rnw with some corrections
-- results.Rnw: results analysis
+- results.Rnw: results analysis. In the end this is used to generate the
+  figures, because the text diverged too much between the Rnw file and the
+  shared tex file.
 
 To update the document:
 1. ~knit(results.rnw)~
