@@ -224,4 +224,10 @@ if (sys.nframe() == 0) {
       split_by = "quant_typic",
       .priors = priors
     ))
+
+  "totfixdur" %>%
+    walk(~ fit_split(dfs[8], .,
+      split_by = "quant_typic",
+      .priors = priors
+    ))
 }

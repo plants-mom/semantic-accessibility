@@ -102,4 +102,21 @@ if (sys.nframe() == 0) {
       iter = 4000
     )) %>%
     iwalk(~ saveRDS(.x, here("models", paste0("gdur_stan_", .y, ".rds"))))
+
+
+  dfs %>%
+    ## GEEN, subject mismatch (atypical)
+    map(~ filter(., quants == 1, typic == -1)) %>%
+    map(~ prepare_data("tgdur", .)) %>%
+    map(~ within(., rm("quant", "typic"))) %>%
+    map(~ stan(
+      file = here("src/mixture_everywhere_split_interf_only.stan"),
+      data = .,
+      control = list(adapt_delta = 0.99, max_treedepth = 15),
+      iter = 4000
+    )) %>%
+    iwalk(~ saveRDS(.x, here(
+      "models",
+      paste0("tgdur_geen_atypical_stan_", .y, ".rds")
+    )))
 }
