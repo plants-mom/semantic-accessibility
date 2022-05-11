@@ -1,0 +1,15 @@
+.DS_Store
+.idea
+*.log
+tmp/
+*.rds
+.auctex-auto/
+*.aux
+.RData
+*cache/
+/.dir-locals.el
+/.projectile
+archive/
+*.bbl
+*.blg
+*.pdf
