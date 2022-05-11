@@ -183,3 +183,7 @@ regr_rr(8)
 <<fig-rr-rp-region-7, fig.cap = "\\label{fig:r7-rr-rp}Re-reading and regression in log-odds at the wrap-up region. The dot denotes the mean, the thick lines the 95\\% credible intervals. The thin lines the whole probability space.">>=
 regr_rr(9)
 @
+
+<<fig-cue-based>>=
+neg_atypical_rts()
+@
