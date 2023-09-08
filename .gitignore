@@ -13,3 +13,11 @@ archive/
 *.bbl
 *.blg
 *.pdf
+/data/
+/doc/
+/doc/
+/figs/
+/results/
+
+# this contains a git repository
+/src/designr/
