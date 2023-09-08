@@ -1,6 +1,6 @@
 let
   pkgs = import (builtins.fetchGit {
-    # Descriptive name to make the store path easier to my_identify
+    # Descriptive name to make the store path easier to identify
     name = "my-R-402-revision";
     url = "https://github.com/NixOS/nixpkgs/";
     ref = "refs/heads/nixpkgs-unstable";
