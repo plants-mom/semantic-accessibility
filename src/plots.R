@@ -249,7 +249,7 @@ measure_summary_regions <- function(plot_data,
 
 
 make_plot_data <- compose(
-  ~ mcmc_intervals_data(.x, prob = 0.95, prob_outer = 1, point_est = "mean"),
+  ~ mcmc_intervals_data(.x, prob = 0.5, prob_outer = 0.95, point_est = "mean"),
   ~ relabel_samples(.),
   ~ posterior_samples(., pars = "b_[^I]") # this is deprecated
   ## ~ as_draws_df(., variable = "b_[^I]", regex = TRUE)
@@ -270,7 +270,7 @@ make_plot_data_stan <- compose(
     )
   ),
   ~ mcmc_intervals_data(.,
-    prob = 0.95, prob_outer = 1,
+    prob = 0.5, prob_outer = 0.95,
     point_est = "mean",
     regex_pars = "b_[^I]"
   ),
