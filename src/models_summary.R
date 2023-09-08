@@ -16,7 +16,8 @@ library(rstan)
 library(readr)
 
 list_rename <- function(.x, ..., .strict = TRUE) {
-  # taken from: https://github.com/tidyverse/purrr/issues/804#issuecomment-729070112
+  ## taken from:
+  ## https://github.com/tidyverse/purrr/issues/804#issuecomment-729070112
   pos <- tidyselect::eval_rename(quote(c(...)), .x, strict = .strict)
   names(.x)[pos] <- names(pos)
   .x
