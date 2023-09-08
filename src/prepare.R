@@ -38,10 +38,18 @@ out %>%
   filter(subjectnr == 43, item %in% c(3, 6, 7, 14, 24))
 
 
+# remove saccade time from fixation time (for rpdur, tgdur, gdur) and save it again as rpdur, tgdur, gdur
+
+out$rpdur <- out$rpdur - out$rpsacc
+out$tgdur <- out$tgdur - out$tgsacc
+out$gdur <- out$gdur - out$gsacc
+
+out <- out %>% select(-c("rpsacc", "tgsacc", "gsacc"))
+
 out %>%
   select(-cond, -expname) %>%
   rename(
     subj = subjectnr, subj_cond = subj, obj_cond = obj,
     quan_cond = quan, region = code
   ) %>%
-  write_csv(here("results/allACTFiles_vp_clean.csv"))
+  write_csv(here("results/allACTFiles_clean_sacccadtetime_removed.csv"))

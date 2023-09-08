@@ -10,7 +10,7 @@ library(purrr)
 library(dplyr)
 
 
-dataf <- read_csv(here("results/allACTFiles_vp_clean.csv")) %>%
+dataf <- read_csv(here("results/allACTFiles_clean_sacccadtetime_removed.csv")) %>%
   mutate(
     cond = case_when(
       quan_cond == "EEN" & subj_cond == "MATCH" & obj_cond == "MATCH" ~ "a",
@@ -28,7 +28,10 @@ dataf <- read_csv(here("results/allACTFiles_vp_clean.csv")) %>%
     typic_cond = ifelse(typic == 1, "typical", "atypical"),
     interf_cond = ifelse(interf == 1, "interf", "no_interf"),
     ## additional variables
-    rrdur = totfixdur - (gdur - gsacc), # re-reading duration
+    ## rrdur = totfixdur - (gdur - gsacc), # re-reading duration
+    ## corrected re-reading duration;
+    ## we don't subtract gsacc because that was already done
+    rrdur = totfixdur - gdur,
     rr = as.numeric(rrdur > 0)
   )
 
