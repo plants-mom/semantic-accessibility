@@ -2,7 +2,7 @@
 ## bayesian models
 ##
 
-here::i_am("src/models.R")
+here::i_am("src/03-models.R")
 
 library(here)
 library(dplyr)
@@ -13,10 +13,10 @@ library(purrr)
 options(mc.cores = parallel::detectCores())
 
 
-fit_full <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
-                     .family = NULL,
-                     optimize_mem = FALSE,
-                     unique_name = FALSE) {
+full_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
+                        .family = NULL,
+                        optimize_mem = FALSE,
+                        unique_name = FALSE) {
   frm <- formula(~ 1 + typic * interf * quants +
     (1 + typic * interf * quants | item) +
     (1 + typic * interf * quants | subj)) %>%
@@ -79,10 +79,14 @@ rem_zeros <- function(data_list, dv_name, remove_zeros) {
 }
 
 
-fit_split <- function(data_list, dv_name, split_by = c("quant", "quant_typic"),
-                      .priors = priors,
-                      remove_zeros = TRUE, .family = NULL, optimize_mem = FALSE,
-                      unique_name = FALSE) {
+split_models <- function(data_list,
+                         dv_name,
+                         split_by = c("quant", "quant_typic"),
+                         .priors = priors,
+                         remove_zeros = TRUE,
+                         .family = NULL,
+                         optimize_mem = FALSE,
+                         unique_name = FALSE) {
 
   ##
   ## this is just for two cases: either splitting by quantifier
@@ -177,7 +181,7 @@ fit_models <- function(data_list, dv_name, .priors,
       .family, optimize_mem, unique_name
     ))
   } else if (.return == "split_models") {
-    return(fit_split(
+    return(split_models(
       data_list = data_list, dv_name = dv_name, split_by = "quant",
       .priors = .priors, remove_zeros = remove_zeros, .family = .family
     ))
@@ -186,7 +190,7 @@ fit_models <- function(data_list, dv_name, .priors,
       data_list, dv_name, .priors, remove_zeros,
       .family, optimize_mem, unique_name
     )
-    split_ms <- fit_split(
+    split_ms <- split_models(
       data_list = data_list, dv_name = dv_name, split_by = "quant",
       .priors = .priors, remove_zeros = remove_zeros, .family = .family
     )
@@ -195,39 +199,78 @@ fit_models <- function(data_list, dv_name, .priors,
 }
 
 
-get_model <- function(dv_name, region, type = "full_models") {
-  fit_model_func <- ifelse(type == "full_models", fit_full, fit_split)
-  list.files(here("results"), pattern = "region[0-9].csv") %>%
-    map(~ read_csv(here("results", .))) %>%
-    .[region] %>%
-    fit_model_func(., dv_name) %>%
-    pluck(paste0("region_", region))
+fit_main_measures <- function(data_list) {
+  c("rrdur", "totfixdur") %>%
+    walk(~ full_models(data_list, ., .priors = priors, optimize_mem = TRUE))
 }
 
 
-if (sys.nframe() == 0) {
-  source(here("src/priors.R"))
-
-  dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
-    map(~ read_csv(here("results", .)))
-
-  map(dfs[6], ~ filter(., gbck != 0)) %>%
+fit_count_measures <- function(data_list) {
+  ## 0s here are missing data
+  map(data_list, ~ filter(., gbck != 0)) %>%
     map(., ~ mutate(., gbck = abs(gbck - 2))) %>%
-    fit_split(., "gbck",
+    full_models(., "gbck",
+      .priors = priors_binom,
+      remove_zeros = FALSE, optimize_mem = TRUE
+    )
+
+  ## 0s here are meaningful
+  full_models(data_list, "rr",
+    .priors = priors_binom,
+    remove_zeros = FALSE, optimize_mem = TRUE
+  )
+}
+
+fit_count_measures_split <- function(data_list) {
+  prepare_gbck <- compose(
+    \(data) mutate(data, gbck = abs(gbck - 2)),
+    \(data) filter(data, gbck != 0)
+  )
+
+  map(data_list, prepare_gbck) %>%
+    split_models(., "gbck",
+      split_by = "quant",
+      .priors = priors_binom,
+      remove_zeros = FALSE, optimize_mem = TRUE
+    )
+
+  map(data_list[c(6, 8)], prepare_gbck) %>%
+    split_models(., "gbck",
       split_by = "quant_typic",
       .priors = priors_binom,
       remove_zeros = FALSE, optimize_mem = TRUE
     )
 
-  "totfixdur" %>%
-    walk(~ fit_split(dfs[7], .,
-      split_by = "quant_typic",
-      .priors = priors
-    ))
+  split_models(data_list, "rr",
+    split_by = "quant",
+    .priors = priors_binom,
+    remove_zeros = FALSE, optimize_mem = TRUE
+  )
+}
 
-  "totfixdur" %>%
-    walk(~ fit_split(dfs[8], .,
-      split_by = "quant_typic",
-      .priors = priors
-    ))
+main <- function() {
+  source(here("src/priors.R"))
+
+  dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
+    map(~ read_csv(here("results", .)))
+
+  ## uncomment in the final: fit_main_measures(dfs)
+  fit_count_measures(dfs)
+  fit_count_measures_split(dfs)
+}
+
+if (sys.nframe() == 0) {
+  main()
+
+  ## "totfixdur" %>%
+  ##   walk(~ fit_split(dfs[7], .,
+  ##     split_by = "quant_typic",
+  ##     .priors = priors
+  ##   ))
+
+  ## "totfixdur" %>%
+  ##   walk(~ fit_split(dfs[8], .,
+  ##     split_by = "quant_typic",
+  ##     .priors = priors
+  ##   ))
 }
