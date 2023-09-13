@@ -1,28 +1,38 @@
 let
   pkgs = import (builtins.fetchGit {
     # Descriptive name to make the store path easier to identify
-    name = "my-R-402-revision";
-    url = "https://github.com/NixOS/nixpkgs/";
-    ref = "refs/heads/nixpkgs-unstable";
-    rev = "2c162d49cd5b979eb66ff1653aecaeaa01690fcc";
-  }) {
-    # overlays = [ (import ./rWrapper2.nix) (import ./here-overlay-old.nix) ];
-    overlays = [ (import ./rWrapper2.nix) (import ./here-overlay.nix) ];
-  };
+    name = "R-with-stan";
+    url = "https://github.com/nixos/nixpkgs/";
+    ref = "refs/heads/nixos-22.05";
+    rev = "47edaa313fc3767ce3026037a5b62352f22f3602";
+  }) { };
 
   rethinking = (import ./rethinking.nix pkgs).rethinking;
   modDesignr = (import ./designr/designr-local.nix pkgs).designr;
 
-in pkgs.rWrapper2.override {
-  packages = with pkgs.rPackages; [
-    brms
-    dplyr
-    here
-    modDesignr
-    readr
-    rethinking
-    tidyr
-    bridgesampling
-    fs
-  ];
+in let
+  myR = pkgs.rWrapper.override {
+    packages = with pkgs.rPackages; [
+      MASS
+      bayesplot
+      brms
+      cowplot
+      here
+      knitr
+      lme4
+      modDesignr
+      rethinking
+      rstan
+      tidyverse
+      xtable
+    ];
+  };
+
+in pkgs.mkShell {
+  nativeBuildInputs = [ myR pkgs.gcc ];
+  shellHook = ''
+    [ -e "$HOME"/.R/Makevars ] && mv -v "$HOME"/.R/Makevars{,_backup}
+    trap ./shellExitHook.sh EXIT
+  ''; # this version of brms didn't work with Makevars
+
 }
