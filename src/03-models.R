@@ -31,7 +31,7 @@ full_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
     map_dfr(unique) %>%
     pull()
 
-  sel_data <- rem_zeros(data_list, dv_name, remove_zeros)
+  sel_data <- prepare_data(data_list, dv_name, remove_zeros)
 
   if (unique_name == TRUE) {
     mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
@@ -57,7 +57,7 @@ full_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
   }
 }
 
-rem_zeros <- function(data_list, dv_name, remove_zeros) {
+prepare_data <- function(data_list, dv_name, remove_zeros) {
   nms <- data_list %>%
     map(~ select(., region)) %>%
     map_dfr(unique) %>%
@@ -79,21 +79,28 @@ rem_zeros <- function(data_list, dv_name, remove_zeros) {
 }
 
 
-split_models <- function(data_list,
-                         dv_name,
-                         split_by = c("quant", "quant_typic"),
-                         .priors = priors,
-                         remove_zeros = TRUE,
-                         .family = NULL,
-                         optimize_mem = FALSE,
-                         unique_name = FALSE) {
+## nested_models
+## we want to compare effects of subj and obj
+## and their interaction within each quantifier
+## first postion: subj, second: obj
+##
+## |      |         | subj_een | obj_een | subj_geen | obj_geen |
+## | een  | m - m   |        1 |       1 |         0 |        0 |
+## |      | m - mm  |        1 |      -1 |         0 |        0 |
+## |      | mm - m  |       -1 |       1 |         0 |        0 |
+## |      | mm - mm |       -1 |      -1 |         0 |        0 |
+## | geen | m - m   |        0 |       0 |         1 |        1 |
+## |      | m - mm  |        0 |       0 |         1 |       -1 |
+## |      | mm - m  |        0 |       0 |        -1 |        1 |
+## |      | mm - mm |        0 |       0 |        -1 |       -1 |
 
-  ##
-  ## this is just for two cases: either splitting by quantifier
-  ## or splitting by typicality and quantifier
-  ## would look much better if made more general
-  ##
-
+nested_models <- function(data_list,
+                          dv_name,
+                          .priors = priors,
+                          remove_zeros = TRUE,
+                          .family = NULL,
+                          optimize_mem = FALSE,
+                          unique_name = FALSE) {
   if (is.null(.family)) {
     .family <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
   }
@@ -101,70 +108,67 @@ split_models <- function(data_list,
   if (unique_name == TRUE) {
     mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
   } else {
-    mname <- paste(dv_name, "r", sep = "_")
+    mname <- paste("nested", dv_name, "r", sep = "_")
   }
 
-  sel_data <- rem_zeros(data_list, dv_name, remove_zeros)
 
-  split <- match.arg(split_by)
+  mdata <- prepare_data(data_list, dv_name, remove_zeros) %>%
+    map(\(dat)
+    mutate(dat,
+      subj_een = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "EEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "EEN" ~ -1,
+        quan_cond == "GEEN" ~ 0
+      ),
+      obj_een = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "EEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "EEN" ~ -1,
+        quan_cond == "GEEN" ~ 0
+      ),
+      subj_geen = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "GEEN" ~ -1,
+        quan_cond == "EEN" ~ 0
+      ),
+      obj_geen = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "GEEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "GEEN" ~ -1,
+        quan_cond == "EEN" ~ 0
+      )
+    ))
 
-  if (split == "quant") {
-    frm <- formula(~ 1 + typic * interf +
-      (1 + typic * interf | item) +
-      (1 + typic * interf | subj)) %>%
-      update.formula(paste0(dv_name, "~ . "))
+  frm <- formula(~ 1 + subj_een * obj_een + subj_geen * subj_geen +
+    (1 + subj_een * obj_een + subj_geen * subj_geen | item) +
+    (1 + subj_een * obj_een + subj_geen * subj_geen | subj)) %>%
+    update.formula(paste0(dv_name, "~ . "))
 
-    split_ms <- sel_data %>%
-      map(~ select(., -quants)) %>%
-      map(~ split(., .$quan_cond)) %>%
-      map(~ imap(., ~ brm(frm,
-        family = .family,
-        prior = .priors,
-        iter = 4000,
-        data = .x,
-        file = here(
-          "models",
-          paste0(
-            dv_name, "_",
-            tolower(.y), "_r", .x$region[1]
-          )
-        )
-      )))
-  } else if (split == "quant_typic") {
-    frm <- formula(~ 1 + interf +
-      (1 + interf | item) +
-      (1 + interf | subj)) %>%
-      update.formula(paste0(dv_name, "~ . "))
-
-    ## message(dv_name, typeof(dv_name))
-    ## message(str(data_list))
-
-    split_ms <- sel_data %>%
-      map(~ select(., -quants, -typic)) %>%
-      map(~ split(., list(.$quan_cond, .$typic_cond), sep = "_")) %>%
-      map(~ imap(., ~ brm(frm,
-        family = .family,
-        prior = .priors,
-        iter = 4000,
-        data = .x,
-        file = here(
-          "models",
-          paste0(
-            dv_name, "_",
-            tolower(.y), "_r", .x$region[1]
-          )
-        )
-      )))
-  } else {
-    message("not implemented")
-    return()
-  }
+  nested_ms <- mdata %>%
+    map(~ select(., -c(
+      quants, quan_cond,
+      typic_cond, interf_cond,
+      cond, quants, typic,
+      interf, subj_cond, obj_cond
+    ))) %>%
+    map(\(dat) brm(frm,
+      family = .family,
+      prior = .priors,
+      iter = 4000,
+      data = dat,
+      file = here("models", paste0(mname, .x$region[1]))
+    ))
 
   if (optimize_mem == TRUE) {
-    rm(split_ms, sel_data, frm)
-    gc()
+    rm(nested_ms)
   } else {
-    return(split_ms)
+    return(nested_ms)
   }
 }
 
@@ -221,15 +225,14 @@ fit_count_measures <- function(data_list) {
   )
 }
 
-fit_count_measures_split <- function(data_list) {
+fit_count_measures_nested <- function(data_list) {
   prepare_gbck <- compose(
     \(data) mutate(data, gbck = abs(gbck - 2)),
     \(data) filter(data, gbck != 0)
   )
 
   map(data_list, prepare_gbck) %>%
-    split_models(., "gbck",
-      split_by = "quant",
+    nested_models(., "gbck",
       .priors = priors_binom,
       remove_zeros = FALSE, optimize_mem = TRUE
     )
@@ -255,7 +258,7 @@ main <- function() {
     map(~ read_csv(here("results", .)))
 
   ## uncomment in the final: fit_main_measures(dfs)
-  fit_count_measures(dfs)
+  ## fit_count_measures(dfs)
   fit_count_measures_split(dfs)
 }
 
