@@ -2,7 +2,7 @@
 ## writing different regions
 ##
 
-here::i_am("src/regions.R")
+here::i_am("src/02-regions.R")
 
 library(here)
 library(readr)
@@ -48,6 +48,8 @@ make_regions <- function(data_in) {
       quan_cond,
       typic_cond,
       interf_cond,
+      subj_cond,
+      obj_cond,
       cond:interf
     ) %>%
     split(.$region)
