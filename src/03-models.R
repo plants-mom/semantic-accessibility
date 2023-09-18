@@ -40,11 +40,11 @@ full_models <- function(data_list, dv_name, .priors, remove_zeros = TRUE,
   }
 
   full_ms <- sel_data %>%
-    map(~ brm(frm,
+    map(\(dat) brm(frm,
       family = .family,
       prior = .priors,
-      iter = 4000, data = .x,
-      file = here("models", paste0(mname, .x$region[1]))
+      iter = 4000, data = dat,
+      file = here("models", paste0(mname, dat$region[1]))
     ))
 
 
@@ -145,9 +145,9 @@ nested_models <- function(data_list,
       )
     ))
 
-  frm <- formula(~ 1 + subj_een * obj_een + subj_geen * subj_geen +
-    (1 + subj_een * obj_een + subj_geen * subj_geen | item) +
-    (1 + subj_een * obj_een + subj_geen * subj_geen | subj)) %>%
+  frm <- formula(~ 1 + subj_een * obj_een + subj_geen * obj_geen +
+    (1 + subj_een * obj_een + subj_geen * obj_geen | item) +
+    (1 + subj_een * obj_een + subj_geen * obj_geen | subj)) %>%
     update.formula(paste0(dv_name, "~ . "))
 
   nested_ms <- mdata %>%
@@ -162,43 +162,13 @@ nested_models <- function(data_list,
       prior = .priors,
       iter = 4000,
       data = dat,
-      file = here("models", paste0(mname, .x$region[1]))
+      file = here("models", paste0(mname, dat$region[1]))
     ))
 
   if (optimize_mem == TRUE) {
     rm(nested_ms)
   } else {
     return(nested_ms)
-  }
-}
-
-fit_models <- function(data_list, dv_name, .priors,
-                       .return = c("full_models", "split_models", "all"),
-                       remove_zeros = TRUE,
-                       .family = NULL,
-                       optimize_mem = FALSE,
-                       unique_name = FALSE) {
-  .return <- match.arg(.return)
-  if (.return == "full_models") {
-    return(fit_full(
-      data_list, dv_name, .priors, remove_zeros,
-      .family, optimize_mem, unique_name
-    ))
-  } else if (.return == "split_models") {
-    return(split_models(
-      data_list = data_list, dv_name = dv_name, split_by = "quant",
-      .priors = .priors, remove_zeros = remove_zeros, .family = .family
-    ))
-  } else if (.return == "all") {
-    full_ms <- fit_full(
-      data_list, dv_name, .priors, remove_zeros,
-      .family, optimize_mem, unique_name
-    )
-    split_ms <- split_models(
-      data_list = data_list, dv_name = dv_name, split_by = "quant",
-      .priors = .priors, remove_zeros = remove_zeros, .family = .family
-    )
-    return(list(full_models = full_ms, split_models = split_ms))
   }
 }
 
@@ -237,15 +207,7 @@ fit_count_measures_nested <- function(data_list) {
       remove_zeros = FALSE, optimize_mem = TRUE
     )
 
-  map(data_list[c(6, 8)], prepare_gbck) %>%
-    split_models(., "gbck",
-      split_by = "quant_typic",
-      .priors = priors_binom,
-      remove_zeros = FALSE, optimize_mem = TRUE
-    )
-
-  split_models(data_list, "rr",
-    split_by = "quant",
+  nested_models(data_list, "rr",
     .priors = priors_binom,
     remove_zeros = FALSE, optimize_mem = TRUE
   )
@@ -259,7 +221,7 @@ main <- function() {
 
   ## uncomment in the final: fit_main_measures(dfs)
   ## fit_count_measures(dfs)
-  fit_count_measures_split(dfs)
+  fit_count_measures_nested(dfs)
 }
 
 if (sys.nframe() == 0) {
