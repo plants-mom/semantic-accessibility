@@ -2,7 +2,7 @@
 ## fitting stan models
 ##
 
-here::i_am("src/stan_models.R")
+here::i_am("src/04-stan_models.R")
 
 library(here)
 library(fs)
@@ -27,7 +27,8 @@ prepare_data <- function(var, region) {
     ))
 }
 
-if (sys.nframe() == 0) {
+main <- function() {
+
   dfs <- dir_ls(here("results"), regexp = "region[0-9].csv") %>%
     map(read_csv)
 
@@ -119,4 +120,9 @@ if (sys.nframe() == 0) {
       "models",
       paste0("tgdur_geen_atypical_stan_", .y, ".rds")
     )))
+
+}
+
+if (sys.nframe() == 0) {
+  main()
 }
