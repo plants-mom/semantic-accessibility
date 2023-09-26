@@ -38,7 +38,7 @@ res <- dir_ls(here("results"), regexp = "[a-z]{2,}_((nested)|(full))") %>%
 
 there are 8 means in the experiment (quantifier, subject, object conditions):
 
-| quantifier | subject (typicality) | object (interference) | alternative       | stimuli                      |
+| quantifier | subject (typicality) | object (interference) | alternative name  | stimuli                      |
 |:----------:|:--------------------:|:---------------------:|:-----------------:|:----------------------------:|
 | EEN        | MATCH                | MATCH                 | (typical, int)    | prof ... a son ... he        |
 | EEN        | MATCH                | MIS                   | (typical, noint)  | prof ... a daughter ... he   |
@@ -49,25 +49,7 @@ there are 8 means in the experiment (quantifier, subject, object conditions):
 | GEEN       | MIS                  | MATCH                 | (atypical, int)   | prof ... no daughter ... she |
 | GEEN       | MIS                  | MIS                   | (atypical, noint) | prof ... no son ... she      |
 
-Contrasts:
-
-```{r coding, eval = FALSE, include = TRUE, echo = TRUE, results = "markup"}
-
-mutate(
-    cond = case_when(
-      quan_cond == "EEN" & subj_cond == "MATCH" & obj_cond == "MATCH" ~ "a",
-      quan_cond == "EEN" & subj_cond == "MATCH" & obj_cond == "MIS" ~ "b",
-      quan_cond == "EEN" & subj_cond == "MIS" & obj_cond == "MATCH" ~ "c",
-      quan_cond == "EEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "d",
-      quan_cond == "GEEN" & subj_cond == "MATCH" & obj_cond == "MATCH" ~ "e",
-      quan_cond == "GEEN" & subj_cond == "MATCH" & obj_cond == "MIS" ~ "f",
-      quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MATCH" ~ "g",
-      quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
-    ),
-    quants = ifelse(quan_cond == "EEN", -1, 1),
-    typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1), # subj match: 1, mismatch -1
-    interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1), # obj match: 1, mismatch -1
-```
+Contrasts for the "base" models:
 
 ```{r contrasts-table }
 dfs[[1]] %>%
@@ -99,20 +81,72 @@ dfs[[1]] %>%
   kable()
 ```
 
-All regions as coded in the file. On the plots the thick line signifies the 0.5 probability interval, the thin line probability of 0.95.
-Note that the region numbers are a bit misleading. Consult the table below:
+Contrasts for the nested models:
 
-| Number in the dataset | Description                                  | How it should be used in the paper               |
-|:---------------------:|:--------------------------------------------:|:------------------------------------------------:|
-| 1                     | subject                                      | 1                                                |
-| 2                     | verb                                         | 2                                                |
-| 3                     | object                                       | 3                                                |
-| 4                     | wrap-up of first sentence                    | (not  present in   all  stimuli,  not  analyzed) |
-| 5                     | introduction         of  second     sentence | 4                                                |
-| 6                     | verb                                         | 5                                                |
-| 7                     | pronoun                                      | 5                                                |
-| 8                     | 3 words  spillover                           | 6                                                |
-| 9                     | wrap-up of  second  sentence                 | 7                                                |
+```{r nested-contrasts }
+
+dfs[[1]] %>%
+  mutate(subj_een = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "EEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "EEN" ~ -1,
+        quan_cond == "GEEN" ~ 0
+      ),
+      obj_een = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "EEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "EEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "EEN" ~ -1,
+        quan_cond == "GEEN" ~ 0
+      ),
+      subj_geen = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "GEEN" ~ -1,
+        quan_cond == "EEN" ~ 0
+      ),
+      obj_geen = case_when(
+        subj_cond == "MATCH" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MATCH" & obj_cond == "MIS" & quan_cond == "GEEN" ~ -1,
+        subj_cond == "MIS" & obj_cond == "MATCH" & quan_cond == "GEEN" ~ 1,
+        subj_cond == "MIS" & obj_cond == "MIS" & quan_cond == "GEEN" ~ -1,
+        quan_cond == "EEN" ~ 0
+      )) %>%
+  group_by(quan_cond, typic_cond, interf_cond) %>%
+  summarise(subj_een = first(subj_een),
+            obj_een = first(obj_een),
+            subj_geen = first(subj_geen),
+            obj_geen = first(obj_geen)) %>%
+  mutate(## subj
+    typic_cond = if_else(typic_cond == "atypical",
+                              "mis", "match"),
+         ## obj
+         interf_cond = if_else(interf_cond == "interf",
+                               "match", "mis"),
+         "condition (quant, subj, obj)" = paste(casefold(quan_cond),
+                                                typic_cond, interf_cond,
+                                                sep = ", ")) %>%
+  ungroup() %>%
+  select(-c(quan_cond:interf_cond)) %>%
+  relocate("condition (quant, subj, obj)") %>%
+  kable()
+```
+
+On the plots the thick line signifies the 0.5 probability interval, the thin line probability of 0.95.
+Note that the region numbers are a bit misleading. Consult the table below (region number 7 is missing):
+
+| Number in the dataset | Description                     | Name in the paper / comments                   |
+|:---------------------:|:-------------------------------:|:----------------------------------------------:|
+| 1                     | subject                         | -                                              |
+| 2                     | verb                            | -                                              |
+| 3                     | object                          | -                                              |
+| 4                     | wrap-up of first sentence       | not  present in   all  stimuli,  not  analyzed |
+| 5                     | introduction of second sentence | pre-critical region                            |
+| 6                     | verb + pronoun                  | critical region                                |
+| 8                     | 3 words  spillover              | post-critical region                           |
+| 9                     | wrap-up of  second  sentence    | wrap-up region                                 |
 
 ## Total fixation duration
 
@@ -149,7 +183,7 @@ post_plots("totfixdur", dfs, .return = "nested_models")
 
 ## Re-reading duration
 
-Data was excluded when the subj did not re-read the region.
+Data was excluded when the participant did not re-read the region.
 
 
 ```{r rrdur }
@@ -189,6 +223,7 @@ There were problems with fitting the `rpdur` measure. So currently we don't have
 
 
 First pass first gaze, `gdur`. Region 5 and the following ones (e.g. starting on critical).
+Note that fits for regions 6 and 8 are a bit off.
 
 ```{r gdur }
 res %>%
@@ -224,7 +259,7 @@ post_plots("gdur", dfs[seq(5,8)], make_plot_func = pp_check, .return = "nested_m
 
 ## Right bounded
 
-Aka first pass total gaze, `tgdur`. Stan full models. Note that region 5 fit badly.
+Aka first pass total gaze, `tgdur`. Note that region 6 fit badly.
 
 
 ```{r tgdur }
@@ -259,7 +294,6 @@ post_plots("tgdur", dfs[seq(5,8)], make_plot_func = pp_check, .return = "nested_
 ## Regressions
 
 Probability of regression, `abs(gbck - 2)`. Bernoulli likelihood with logistic link, results on the logistic scale.
-Full models.
 
 ```{r gbck }
 res %>%
