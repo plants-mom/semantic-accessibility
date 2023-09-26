@@ -16,6 +16,7 @@ y <- read_csv(here("results/region6.csv")) %>%
   pull(rpdur)
 
 
+
 fit <- readRDS(here("models/rpdur_stan_r6.rds"))
 yrep <- extract(fit, pars = "yrep")$yrep
 
@@ -39,3 +40,15 @@ if (sys.nframe() == 0) {
 
   ggsave(here("figs/ppc_tgdur_stat2_stan.png"))
 }
+
+y <- read_csv(here("results/region8.csv")) %>%
+  filter(gdur != 0) %>%
+  pull(gdur)
+
+fit <- readRDS(here("models/gdur_stan_region8.rds"))
+yrep <- extract(fit, pars = "yrep")$yrep
+
+ppc_dens_overlay(y, yrep[1:200,]) +
+  coord_cartesian(
+    ## ylim = c(0, 0.005),
+    xlim = c(0, 1500))

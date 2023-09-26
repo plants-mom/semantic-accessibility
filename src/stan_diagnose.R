@@ -5,11 +5,27 @@
 here::i_am("src/stan_diagnose.R")
 
 library(here)
+library(fs)
 library(dplyr)
 library(purrr)
 library(rstan)
 library(readr)
 library(bayesplot)
+
+
+
+mds <- dir_ls(here("models"), regexp =  "gdur_stan_region[5-9].rds") %>%
+  map(readRDS)
+
+  names(mds) <- names(mds) %>%
+    path_file() %>%
+    path_ext_remove()
+
+rhats <- map(mds, rhat)
+
+rhat_all <- compose(all, \(rh) rh < 1.1 )
+map(rhats, rhat_all)
+map(mds, check_divergences)
 
 ## model <- "models/gdur_stan_region8.rds"
 model <- "models/tgdur_stan_region5.rds"
