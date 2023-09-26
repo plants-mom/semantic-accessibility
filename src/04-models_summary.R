@@ -2,7 +2,7 @@
 ## helper functions and summaries for the fitted brms and rstan models
 ##
 
-here::i_am("src/models_summary.R")
+here::i_am("src/04-models_summary.R")
 
 library(here)
 library(fs)
@@ -34,35 +34,23 @@ ps_rename <- compose(
 )
 
 make_plot <- compose(
-  ~ mcmc_intervals(.x, prob = 0.95, prob_outer = 1),
+  ~ mcmc_intervals(.x, prob = 0.5, prob_outer = 0.95),
   ~ relabel_samples(.),
   ~ posterior_samples(., pars = "b_[^I]")
 )
 
 post_plots <- function(var_name, data_list,
                        make_plot_func = make_plot,
-                       .return = c("full_models", "split_models")) {
+                       .return = c("full_models", "nested_models")) {
   .return <- match.arg(.return)
 
   if (.return == "full_models") {
-
-  fit_full(data_list, var_name) %>%
+    full_models(data_list, var_name) %>%
       map(make_plot_func)
-
-  } else if (.return == "split_models") {
-
-  fit_split(data_list, var_name) %>%
-      map( ~ map(.x, ~ make_plot_func(.x)))
+  } else if (.return == "nested_models") {
+    nested_models(data_list, var_name) %>%
+      map(make_plot_func)
   }
-  ## fit_models(data_list, var_name, ...) %>%
-  ##   modify_at(
-  ##     "full_models",
-  ##     ~ map(.x, ~ make_plot_func(.x))
-  ##   ) %>%
-  ##   modify_at(
-  ##     "split_models",
-  ##     ~ map(.x, ~ map(.x, ~ make_plot_func(.x)))
-  ##   )
 }
 
 relabel_samples <- function(labelled_smpls) {
@@ -113,50 +101,58 @@ relabel_summary <- function(ps_summary) {
           rowname == "b_typic:interf" ~ "subj x obj",
           rowname == "b_typic:quants" ~ "subj x quants",
           rowname == "b_interf:quants" ~ "obj x quants",
-          rowname == "b_typic:interf:quants" ~ "subj x obj x quants"
+          rowname == "b_typic:interf:quants" ~ "subj x obj x quants",
+          TRUE ~ rowname
         )
     )
 }
 
-write_summary <- function(var_name, data_list = dfs, mods = c("full", "split"),
+write_summary <- function(var_name, data_list = dfs, mods = c("full", "nested"),
                           ...) {
   mods <- match.arg(mods)
 
   if (mods == "full") {
-    list(full_models = fit_full(data_list, var_name)) %>%
+    list(full_models = full_models(data_list, var_name)) %>%
       map(msummary) %>%
       iwalk(~ write_csv(.x, here(
         "results",
         paste0(var_name, "_", .y, ".csv")
       )))
-  } else if (mods == "split") {
-    list(split_models = fit_split(data_list, var_name)) %>%
-      map(~ map_dfr(., ~ msummary(., id = "quant"),
-        .id = "region"
-      )) %>%
-      iwalk(~
-      write_csv(.x, here(
-        "results",
-        paste0(var_name, "_", .y, ".csv")
-      )))
+  } else if (mods == "nested") {
+    list(nested_models = nested_models(data_list, var_name)) %>%
+      map(msummary) %>%
+      iwalk(\(model_summary, name)
+        write_csv(model_summary, here(
+          "results",
+          paste0(var_name, "_", name, ".csv")
+        )))
   }
 }
 
-if (sys.nframe() == 0) {
+main <- function() {
   source(here("src/priors.R"))
-  source(here("src/models.R"))
+  source(here("src/03-models.R"))
 
   dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
     map(~ read_csv(here("results", .)))
 
-  ## c("gdur", "tgdur", "rpdur") %>%
-  ##   walk(~ write_summary(., dfs[6:8]))
+  c("gdur", "tgdur") %>%
+    walk(~ write_summary(., dfs[seq(5,8)]))
 
-  ## c("totfixdur", "rrdur", "gbck", "rr") %>%
-  ##   walk(~ write_summary(., dfs, mods = "full"))
+  c("totfixdur", "rrdur", "gbck", "rr") %>%
+    walk(~ write_summary(., dfs))
 
-  ## c("totfixdur", "rrdur", "gbck", "rr") %>%
-  ##   walk(~ write_summary(., dfs, mods = "split"))
+  c("totfixdur", "rrdur", "gbck", "rr") %>%
+    walk(~ write_summary(., dfs, mods = "nested"))
+
+  c("tgdur", "gdur") %>%
+    walk(~ write_summary(., dfs[seq(5,8)], mods = "nested"))
+}
+
+if (sys.nframe() == 0) {
+  main()
+
+
 
   ## fit_split(dfs[6], "gbck",
   ##   split_by = "quant_typic",
@@ -178,22 +174,22 @@ if (sys.nframe() == 0) {
   ##
   ##
 
-  stanm_pars <- c("alpha", "b_quant", "b_typic", "b_interf",
-                "b_interf_quant", "b_interf_typic",
-                "b_quant_typic", "b_interf_quant_typic",
-                "sigma_e", "sigma_e_shift", "prob", "delta")
+  ## stanm_pars <- c("alpha", "b_quant", "b_typic", "b_interf",
+  ##               "b_interf_quant", "b_interf_typic",
+  ##               "b_quant_typic", "b_interf_quant_typic",
+  ##               "sigma_e", "sigma_e_shift", "prob", "delta")
 
-  dir_ls(here("models"), regexp =  "t?gdur_stan_region[1-9].rds") %>%
-    map(readRDS) %>%
-    map(~ summary(.,
-                  pars = stanm_pars,
-                  probs = c(0.025, 0.975)
-                  )$summary) %>%
-    map(relabel_stan_sum) %>%
-    map_dfr(as.data.frame, .id = "source") %>%
-    mutate(source = path_file(source)) %>%
-    rename(region = source) %>%
-    write_csv(here("results/stan_models_summary.csv"))
+  ## dir_ls(here("models"), regexp =  "t?gdur_stan_region[1-9].rds") %>%
+  ##   map(readRDS) %>%
+  ##   map(~ summary(.,
+  ##                 pars = stanm_pars,
+  ##                 probs = c(0.025, 0.975)
+  ##                 )$summary) %>%
+  ##   map(relabel_stan_sum) %>%
+  ##   map_dfr(as.data.frame, .id = "source") %>%
+  ##   mutate(source = path_file(source)) %>%
+  ##   rename(region = source) %>%
+  ##   write_csv(here("results/stan_models_summary.csv"))
 
   ## fit_split(dfs[1], "rrdur",
   ##   split_by = "quant_typic",
