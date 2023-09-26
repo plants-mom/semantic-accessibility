@@ -23,8 +23,10 @@ make_regions <- function(data_in) {
         quan_cond == "GEEN" & subj_cond == "MIS" & obj_cond == "MIS" ~ "h"
       ),
       quants = ifelse(quan_cond == "EEN", -1, 1),
-      typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1), # subj
-      interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1), # obj
+      ## typicality is subj match: 1, mismatch -1
+      typic = ifelse(cond %in% c("a", "b", "e", "f"), 1, -1),
+      ## interference is obj match: 1, mismatch -1
+      interf = ifelse(cond %in% c("a", "c", "e", "g"), 1, -1),
       typic_cond = ifelse(typic == 1, "typical", "atypical"),
       interf_cond = ifelse(interf == 1, "interf", "no_interf"),
       ## additional variables
