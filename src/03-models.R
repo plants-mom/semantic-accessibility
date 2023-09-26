@@ -176,6 +176,12 @@ nested_models <- function(data_list,
 fit_main_measures <- function(data_list) {
   c("rrdur", "totfixdur") %>%
     walk(~ full_models(data_list, ., .priors = priors, optimize_mem = TRUE))
+
+  c("tgdur", "gdur") %>%
+    walk(~ full_models(data_list[seq(5, 8)],
+      .,
+      .priors = priors, optimize_mem = TRUE
+    ))
 }
 
 
@@ -213,29 +219,30 @@ fit_count_measures_nested <- function(data_list) {
   )
 }
 
+fit_main_measures_nested <- function(data_list) {
+  c("rrdur", "totfixdur") %>%
+    walk(~ nested_models(data_list, ., .priors = priors, optimize_mem = TRUE))
+
+  c("tgdur", "gdur", "rpdur") %>%
+    walk(\(var) nested_models(data_list[seq(5, 8)],
+      var,
+      .priors = priors, optimize_mem = TRUE
+    ))
+}
+
 main <- function() {
   source(here("src/priors.R"))
 
   dfs <- list.files(here("results"), pattern = "region[0-9].csv") %>%
     map(~ read_csv(here("results", .)))
 
-  ## uncomment in the final: fit_main_measures(dfs)
-  ## fit_count_measures(dfs)
+  ## this might run out of memory
+  fit_main_measures(dfs)
+  fit_count_measures(dfs)
   fit_count_measures_nested(dfs)
+  fit_main_measures_nested(dfs)
 }
 
 if (sys.nframe() == 0) {
   main()
-
-  ## "totfixdur" %>%
-  ##   walk(~ fit_split(dfs[7], .,
-  ##     split_by = "quant_typic",
-  ##     .priors = priors
-  ##   ))
-
-  ## "totfixdur" %>%
-  ##   walk(~ fit_split(dfs[8], .,
-  ##     split_by = "quant_typic",
-  ##     .priors = priors
-  ##   ))
 }
