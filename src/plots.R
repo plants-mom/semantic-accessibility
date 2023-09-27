@@ -19,7 +19,7 @@ library(purrr)
 library(brms)
 library(ggtext)
 
-source(here("src/models_summary.R"))
+source(here("src/04-models_summary.R"))
 ##
 ## prior predictive check plots
 ##
@@ -160,10 +160,14 @@ neg_atypical_rts <- function() {
   regions_data <- function(region) {
     f <- compose(readRDS, here, paste0)
     list(
-      TFD = make_plot_data(f("models/totfixdur_geen_atypical_r",
-                             region, ".rds")),
-      RB = make_plot_data_stan(f("models/tgdur_geen_atypical_stan_region",
-                                 region, ".rds"))
+      TFD = make_plot_data(f(
+        "models/totfixdur_geen_atypical_r",
+        region, ".rds"
+      )),
+      RB = make_plot_data_stan(f(
+        "models/tgdur_geen_atypical_stan_region",
+        region, ".rds"
+      ))
     ) %>%
       bind_rows(.id = "measure") %>%
       mutate(region = region)
@@ -175,10 +179,14 @@ neg_atypical_rts <- function() {
     regions_data(9)
   ) %>%
     bind_rows() %>%
-    mutate(region = case_when(region == 6 ~ "critical",
-                              region == 8 ~ "post-critical",
-                              region == 9 ~ "wrap-up"),
-           region = as.factor(region)) %>%
+    mutate(
+      region = case_when(
+        region == 6 ~ "critical",
+        region == 8 ~ "post-critical",
+        region == 9 ~ "wrap-up"
+      ),
+      region = as.factor(region)
+    ) %>%
     measure_summary_regions()
 }
 
@@ -220,8 +228,8 @@ measure_summary <- function(plot_data,
 }
 
 measure_summary_regions <- function(plot_data,
-                            .measure = "measure",
-                            pal = cur_palette) {
+                                    .measure = "measure",
+                                    pal = cur_palette) {
 
   ## This should be refactored with measure_summary,
   ## but I don't have the time
@@ -252,7 +260,8 @@ make_plot_data <- compose(
   ~ mcmc_intervals_data(.x, prob = 0.5, prob_outer = 0.95, point_est = "mean"),
   ~ relabel_samples(.),
   ~ posterior_samples(., pars = "b_[^I]") # this is deprecated
-  ## ~ as_draws_df(., variable = "b_[^I]", regex = TRUE)
+  ## should be: ~ as_draws_df(., variable = "b_[^I]", regex = TRUE)
+  ## but need to check
 )
 
 make_plot_data_stan <- compose(
@@ -276,6 +285,8 @@ make_plot_data_stan <- compose(
   ),
 )
 
+## this uses split models
+## which are not correct
 r6_split_plot <- function(pal = cur_palette) {
   dod <- 0.5
 
@@ -312,11 +323,55 @@ r6_by_cond <- function(measure, pal = cur_palette) {
     scale_fill_brewer(palette = pal)
 }
 
-if (sys.nframe() == 0) {
-  source(here("src/priors.R"))
 
-  ## ppc_params_plots(here("results/ppc_params_sample_binom2021-11-29.csv")) # nolint
-  pp <- ppc_rt_plots(here("results/sim_summary.csv"), priors)
+main <- function() {
+  dims <- c(7, 4.7)
+  ggsave(
+    file = here("figs/fig-critical2.pdf"),
+    plot = r6_by_cond("tgdur"), width = dims[1], height = dims[2]
+  )
+
+  ggsave(
+    file = here("figs/fig-region5.pdf"),
+    plot = rts(6), width = dims[1], height = dims[2]
+  )
+
+  ggsave(
+    file = here("figs/fig-region6.pdf"),
+    plot = rts(8), width = dims[1], height = dims[2]
+  )
+
+  ggsave(
+    file = here("figs/fig-region9.pdf"),
+    plot = rts(9), width = dims[1], height = dims[2]
+  )
+
+  ggsave(
+    file = here("figs/fig-rr-rp-region-5.pdf"),
+    plot = regr_rr(6), width = dims[1], height = dims[2]
+  )
+
+  ggsave(
+    file = here("figs/fig-rr-rp-region-6.pdf"),
+    plot = regr_rr(8), width = dims[1], height = dims[2]
+  )
+
+  ggsave(
+    file = here("figs/fig-rr-rp-region-7.pdf"),
+    plot = regr_rr(9), width = dims[1], height = dims[2]
+  )
+
+  ## not used fig: fig-obj-quant-int
+  ## to make it: r6_split_plot()
+
+  ## what to do with this? this is a "split" model,
+  ## not correct figure name: fig-cue-based
+  ## to make it: neg_atypical_rts()
+
   measure_by_cond()
   ggsave(here("figs/measure_by_cond.png"))
+}
+
+if (sys.nframe() == 0) {
+  main()
 }
