@@ -7,9 +7,6 @@ let
     rev = "47edaa313fc3767ce3026037a5b62352f22f3602";
   }) { };
 
-  rethinking = (import ./rethinking.nix pkgs).rethinking;
-  modDesignr = (import ./designr/designr-local.nix pkgs).designr;
-
 in let
   myR = pkgs.rWrapper.override {
     packages = with pkgs.rPackages; [
@@ -17,11 +14,11 @@ in let
       bayesplot
       brms
       cowplot
+      ggplot2
+      ggtext
       here
       knitr
       lme4
-      modDesignr
-      rethinking
       rstan
       tidyverse
       xtable
