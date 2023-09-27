@@ -1,5 +1,6 @@
 ##
-## Descriptive summaries for all the regions and measures
+## Creates latex tables with
+## descriptive summaries for all the regions and measures
 ##
 
 here::i_am("src/descriptive.R")
