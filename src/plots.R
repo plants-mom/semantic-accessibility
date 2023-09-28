@@ -141,15 +141,14 @@ ms_r1 <- function() {
     measure_summary()
 }
 
+##
+## TFD RB measures plot
+##
 rts <- function(region) {
-  ##
-  ## TFD RB and RRD measures plot
-  ##
   f <- compose(readRDS, here, paste0)
   list(
     TFD = make_plot_data(f("models/totfixdur_r", region, ".rds")),
-    RB = make_plot_data_stan(f("models/tgdur_stan_region", region, ".rds")),
-    RRD = make_plot_data(f("models/rrdur_r", region, ".rds"))
+    RB = make_plot_data(f("models/tgdur_r", region, ".rds"))
   ) %>%
     bind_rows(.id = "measure") %>%
     measure_summary()
@@ -164,8 +163,8 @@ neg_atypical_rts <- function() {
         "models/totfixdur_geen_atypical_r",
         region, ".rds"
       )),
-      RB = make_plot_data_stan(f(
-        "models/tgdur_geen_atypical_stan_region",
+      RB = make_plot_data(f(
+        "models/tgdur_geen_atypical_r",
         region, ".rds"
       ))
     ) %>%
@@ -175,15 +174,13 @@ neg_atypical_rts <- function() {
 
   list(
     regions_data(6),
-    regions_data(8),
-    regions_data(9)
+    regions_data(8)
   ) %>%
     bind_rows() %>%
     mutate(
       region = case_when(
         region == 6 ~ "critical",
-        region == 8 ~ "post-critical",
-        region == 9 ~ "wrap-up"
+        region == 8 ~ "post-critical"
       ),
       region = as.factor(region)
     ) %>%
@@ -196,7 +193,6 @@ regr_rr <- function(region) {
   ##
   f <- compose(make_plot_data, readRDS, here)
   list(
-    RR = f(paste0("models/rr_r", region, ".rds")),
     RP = f(paste0("models/gbck_r", region, ".rds"))
   ) %>%
     bind_rows(.id = "measure") %>%
@@ -255,13 +251,10 @@ measure_summary_regions <- function(plot_data,
     scale_fill_brewer(palette = pal)
 }
 
-
 make_plot_data <- compose(
   ~ mcmc_intervals_data(.x, prob = 0.5, prob_outer = 0.95, point_est = "mean"),
   ~ relabel_samples(.),
-  ~ posterior_samples(., pars = "b_[^I]") # this is deprecated
-  ## should be: ~ as_draws_df(., variable = "b_[^I]", regex = TRUE)
-  ## but need to check
+  ~ as_draws_df(., variable = "b_[^I]", regex = TRUE)
 )
 
 make_plot_data_stan <- compose(
@@ -357,16 +350,15 @@ main <- function() {
   )
 
   ggsave(
-    file = here("figs/fig-rr-rp-region-7.pdf"),
-    plot = regr_rr(9), width = dims[1], height = dims[2]
+    file = here("figs/fig-cue-based.pdf"),
+    plot = neg_atypical_rts(), width = dims[1], height = dims[2]
   )
+
+  ## not used fig fig-rr-rp-region-7
+  ## run this to make: regr_rr(9)
 
   ## not used fig: fig-obj-quant-int
   ## to make it: r6_split_plot()
-
-  ## what to do with this? this is a "split" model,
-  ## not correct figure name: fig-cue-based
-  ## to make it: neg_atypical_rts()
 
   measure_by_cond()
   ggsave(here("figs/measure_by_cond.png"))
