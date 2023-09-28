@@ -1,7 +1,6 @@
 .DS_Store
 .idea
 *.log
-tmp/
 *.rds
 .auctex-auto/
 *.aux
@@ -13,9 +12,10 @@ archive/
 *.bbl
 *.blg
 *.pdf
-/data/
-/doc/
-/doc/
+
+# directories
+/tmp/
+/archive
 /figs/
 /results/
 
