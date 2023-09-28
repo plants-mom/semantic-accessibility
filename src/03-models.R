@@ -173,6 +173,56 @@ nested_models <- function(data_list,
 }
 
 
+##
+## this is just for the models split on
+## typicality and quantifier, to illustrate the cue-based effect
+##
+split_models <- function(data_list,
+                         dv_name,
+                         .priors = priors,
+                         remove_zeros = TRUE,
+                         .family = NULL,
+                         optimize_mem = FALSE,
+                         unique_name = FALSE) {
+  if (is.null(.family)) {
+    .family <- ifelse(dv_name %in% c("gbck", "rr"), "bernoulli", "lognormal")
+  }
+
+  if (unique_name == TRUE) {
+    mname <- paste(format(Sys.time(), "%s"), dv_name, "r", sep = "_")
+  } else {
+    mname <- paste(dv_name, "r", sep = "_")
+  }
+
+  mdata <- prepare_data(data_list, dv_name, remove_zeros)
+
+  frm <- formula(~ 1 + interf +
+    (1 + interf | item) +
+    (1 + interf | subj)) %>%
+    update.formula(paste0(dv_name, "~ . "))
+
+  split_ms <- mdata %>%
+    map(~ select(., -quants, -typic)) %>%
+    map(~ split(., list(.$quan_cond, .$typic_cond), sep = "_")) %>%
+    map(~ imap(., ~ brm(frm,
+      family = .family,
+      prior = .priors,
+      iter = 4000,
+      data = .x,
+      file = here(
+        "models",
+        paste0(
+          dv_name, "_",
+          tolower(.y), "_r", .x$region[1]
+        )
+      )
+    )))
+
+  return(split_ms)
+}
+
+
+
 fit_main_measures <- function(data_list) {
   c("rrdur", "totfixdur") %>%
     walk(~ full_models(data_list, ., .priors = priors, optimize_mem = TRUE))
@@ -230,6 +280,12 @@ fit_main_measures_nested <- function(data_list) {
     ))
 }
 
+## models needed for cue-based plot
+fit_split_models <- function(data_list) {
+  c("tgdur", "totfixdur") %>%
+    walk(\(var) split_models(data_list[seq(6, 8)], var, .priors = priors))
+}
+
 main <- function() {
   source(here("src/priors.R"))
 
@@ -237,10 +293,12 @@ main <- function() {
     map(~ read_csv(here("results", .)))
 
   ## this might run out of memory
+  ## if this happens, run again
   fit_main_measures(dfs)
   fit_count_measures(dfs)
   fit_count_measures_nested(dfs)
   fit_main_measures_nested(dfs)
+  fit_split_models(dfs)
 }
 
 if (sys.nframe() == 0) {
