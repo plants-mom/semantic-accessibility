@@ -2,22 +2,29 @@
 .idea
 *.log
 *.rds
-.auctex-auto/
 *.aux
 .RData
-*cache/
 /.dir-locals.el
 /.projectile
-archive/
 *.bbl
 *.blg
 *.pdf
 
 # directories
-/tmp/
-/archive
-/figs/
-/results/
+tmp/
+archive/
+*cache/
+.auctex-auto/
 
-# this contains a git repository
-/src/designr/
+# keep these directories, but not their contents
+/figs/**
+!/figs/**/
+!/figs/**/.gitkeep
+
+/results/**
+!/results/**/
+!/results/**/.gitkeep
+
+/models/**
+!/models/**/
+!/models/**/.gitkeep
