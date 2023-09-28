@@ -12,3 +12,6 @@ To recreate the project run in the nix-shell (all the source files are in the sr
 Rscript 01-prepare.R
 Rscript 02-regions.R
 Rscript 03-models.R
+
+
+- plots.R -- requires models to be in the dir models (i.e. 03-models.R has to be run)
