@@ -16,6 +16,7 @@ in let
       cowplot
       ggplot2
       ggtext
+      rmarkdown
       here
       knitr
       lme4
@@ -26,7 +27,7 @@ in let
   };
 
 in pkgs.mkShell {
-  nativeBuildInputs = [ myR pkgs.gcc ];
+  nativeBuildInputs = [ myR pkgs.gcc pkgs.pandoc];
   shellHook = ''
     [ -e "$HOME"/.R/Makevars ] && mv -v "$HOME"/.R/Makevars{,_backup}
     trap ./shellExitHook.sh EXIT
