@@ -9,7 +9,6 @@
 *.bbl
 *.blg
 *.pdf
-*.html
 
 # directories
 tmp/
