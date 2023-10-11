@@ -3,7 +3,8 @@ This repository contains the data and the code for the analysis of the first
 eye-tracking experiment (referred to as "experiment 2" in the paper) described
 in the paper "Semantic accessibility and interference in pronoun resolution".
 See this osf repository for details: https://osf.io/xznw7/
-If you just want to examine the results feel free to download doc/models_summary.html. This file contains all the results. If you want to reproduce the analysis, read on.
+If you just want to examine the results feel free to download doc/models_summary.html.
+This file contains all the results. If you want to reproduce the analysis, read on.
 
 There is a default.nix file in the src dir which will make all the relevant
 packages available in your shell. You have to have nix installed
@@ -25,6 +26,7 @@ To recreate the project run in the nix-shell, in the project root:
 Rscript src/01-prepare.R
 Rscript src/02-regions.R
 Rscript src/03-models.R
+Rscript src/04-models_summary.R
 Rscript -e "rmarkdown::render(here::here('doc/models_summary.Rmd'), output_format = 'html_document')"
 
 NB: this can take a long time, and your computer might run out of memory, particularly while running 03-models.R. If this happens, just re-run the file until it succeeds.
