@@ -12,9 +12,7 @@ packages available in your shell. You have to have nix installed
 
 The file src/default.nix will also temporarily move your ~/.R/Makevars file and
 restore it once you exit the shell. This is because, there were some issues with
-the recommended Makevars settings and the brms version used for this project. To
-make sure it works as intended, check if the file src/shellExitHook.sh is
-executable. If you never set Makevars you can ignore this part.
+the recommended Makevars settings and the brms version used for this project.
 After you did all that, in the project root run:
 
 nix-shell src/default.nix --pure
@@ -53,5 +51,4 @@ Description of the files in the project:
    ├── default.nix: nix file with a recipe for the shell (see above)
    ├── descriptive.R: creates latex tables with descriptive summaries used in the paper
    ├── plots.R: plots used in the paper, files starting with 01,02,03 have to be run before
-   ├── priors.R: priors for the bayesian models
-   └── shellExitHook.sh: exit hook for the nix shell, see above
+   └── priors.R: priors for the bayesian models
