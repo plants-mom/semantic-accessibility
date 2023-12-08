@@ -9,6 +9,7 @@
 *.bbl
 *.blg
 *.pdf
+!descriptive.pdf
 
 # directories
 tmp/

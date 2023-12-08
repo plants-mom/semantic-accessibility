@@ -50,8 +50,14 @@ rts_sum <- function(all_data) {
   rts_summary$measure <- cleanf(rts_summary$measure)
   rts_summary$quantifier <- cleanf(rts_summary$quantifier)
 
-  print(xtable(rts_summary),
-    include.rownames = FALSE, file = here("results/rts_summary.tex")
+  tbl <- xtable(rts_summary,
+    caption = "Experiment 2: Mean raw reading times by measure and condition"
+  )
+  print(tbl,
+    include.rownames = FALSE,
+    tabular.environment = "longtable", print.results = FALSE,
+    caption.placement = "top",
+    floating = FALSE
   )
 }
 
@@ -59,9 +65,6 @@ rts_sum <- function(all_data) {
 ## probab of regression abs(gbck - 2)
 ## gbck should be called rp
 
-
-## remove 0s from gbck!
-## check what does 0 in rr mean
 
 counts_sum <- function(all_data) {
   counts <- c("gbck", "rr")
@@ -90,8 +93,15 @@ counts_sum <- function(all_data) {
   count_summary$measure <- cleanf(count_summary$measure)
   count_summary$quantifier <- cleanf(count_summary$quantifier)
 
-  print(xtable(count_summary),
-    include.rownames = FALSE, file = here("results/count_summary.tex")
+
+  tbl <- xtable(count_summary,
+    caption = "Experiment 2: Count summary by measure and condition"
+  )
+  print(tbl,
+    include.rownames = FALSE,
+    tabular.environment = "longtable", print.results = FALSE,
+    caption.placement = "top",
+    floating = FALSE
   )
 }
 
@@ -101,10 +111,33 @@ main <- function() {
     mutate(
       subj_cond = if_else(typic_cond == "typical", "M", "MM"),
       obj_cond = if_else(interf_cond == "interf", "M", "MM"),
-      quan_cond = tolower(quan_cond)
-    )
-  counts_sum(all_data)
-  rts_sum(all_data)
+      quan_cond = tolower(quan_cond),
+      region = case_when(
+      region == 1 ~ "subject",
+      region == 2 ~ "verb",
+      region == 3 ~ "object",
+      region == 4 ~ "wrap-up1",
+      region == 5 ~ "pre-critical",
+      region == 6 ~ "critical",
+      region == 8 ~ "post-critical",
+      region == 9 ~ "wrap-up2"
+    ),
+    region = factor(region,
+      levels = c("subject", "verb", "object",
+                 "wrap-up1", "pre-critical",
+                 "critical", "post-critical", "wrap-up2"),
+      ordered = TRUE
+    ))
+
+  file_conn <- file(here("results/descriptive.tex"))
+  writeLines(c(
+    "\\documentclass{article}",
+    "\\usepackage{longtable}\n\\begin{document}",
+    rts_sum(all_data),
+    counts_sum(all_data),
+    "\\end{document}"
+  ), file_conn)
+  close(file_conn)
 }
 
 if (sys.nframe() == 0) {

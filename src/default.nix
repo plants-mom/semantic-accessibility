@@ -27,7 +27,8 @@ in let
   };
 
 in pkgs.mkShell {
-  nativeBuildInputs = [ myR pkgs.gcc pkgs.pandoc];
+  nativeBuildInputs =
+    [ myR pkgs.gcc pkgs.pandoc pkgs.texlive.combined.scheme-basic ];
   shellHook = ''
     [ -e "$HOME"/.R/Makevars ] && mv -v "$HOME"/.R/Makevars{,_backup}
     trap "[ -e "$HOME"/.R/Makevars_backup ] && mv -v "$HOME"/.R/Makevars{_backup,}" EXIT
